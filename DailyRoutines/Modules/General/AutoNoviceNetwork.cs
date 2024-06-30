@@ -23,26 +23,9 @@ public unsafe class AutoNoviceNetwork : DailyModuleBase
         public uint LastInputTickCount;
     }
 
-    [StructLayout(LayoutKind.Explicit, Size = 40)]
-    private struct InfoProxyBeginner
-    {
-        [FieldOffset(0)]
-        public InfoProxyInterface InfoProxyInterface;
-
-        [FieldOffset(32)]
-        public bool IsInNoviceNetwork;
-
-        public static InfoProxyBeginner* Instance() => (InfoProxyBeginner*)InfoModule.Instance()->GetInfoProxyById((InfoProxyId)20);
-    }
-
     private delegate byte TryJoinNoviceNetworkDelegate(InfoProxyInterface* infoProxy20);
     [Signature("E8 ?? ?? ?? ?? 45 33 F6 41 B4")]
     private static TryJoinNoviceNetworkDelegate? TryJoinNoviceNetwork;
-
-    private delegate bool IsNoviceNetworkFlagSetDelegate(PlayerState* instance, uint flag);
-    // 传入 8U 检测是否启用自动加入新人频道
-    [Signature("8B C2 44 8B C2 C1 E8 ?? 4C 8B C9 83 F8 ?? 72 ?? 32 C0 C3 41 83 E0 ?? BA ?? ?? ?? ?? 41 0F B6 C8 D2 E2", ScanType = ScanType.Text)]
-    private static IsNoviceNetworkFlagSetDelegate? IsNoviceNetworkFlagSet;
 
     private static Timer? AfkTimer;
     private static int TryTimes;
@@ -114,7 +97,7 @@ public unsafe class AutoNoviceNetwork : DailyModuleBase
     {
         TaskHelper.Enqueue(() =>
         {
-            if (!IsNoviceNetworkFlagSet(PlayerState.Instance(), 8U))
+            if (!PlayerState.Instance()->IsPlayerStateFlagSet(PlayerStateFlag.IsNoviceNetworkAutoJoinEnabled))
                 ChatHelper.Instance.SendMessage("/beginnerchannel on");
         });
 
@@ -135,10 +118,13 @@ public unsafe class AutoNoviceNetwork : DailyModuleBase
         });
     }
 
-    private static void TryJoin()
-        => TryJoinNoviceNetwork(&InfoProxyBeginner.Instance()->InfoProxyInterface);
+    private static void TryJoin() => TryJoinNoviceNetwork(InfoModule.Instance()->GetInfoProxyById(20));
 
-    private static bool IsInNoviceNetwork() => InfoProxyBeginner.Instance()->IsInNoviceNetwork;
+    private static bool IsInNoviceNetwork()
+    {
+        var infoProxy = InfoModule.Instance()->GetInfoProxyById(20);
+        return ((int)infoProxy[1].VTable & 1) != 0;
+    }
 
     private void OnAfkStateCheck(object? sender, ElapsedEventArgs e)
     {
