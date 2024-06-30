@@ -4,7 +4,7 @@ using DailyRoutines.Managers;
 using DailyRoutines.Notifications;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using Dalamud.Interface.Internal.Notifications;
+using Dalamud.Interface.ImGuiNotification;
 
 namespace DailyRoutines.Helpers;
 

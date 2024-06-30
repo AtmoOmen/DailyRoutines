@@ -107,7 +107,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
             return;
         }
 
-        var parts = Marshal.PtrToStringUTF8((nint)AtkStage.GetSingleton()->GetStringArrayData()[32]->StringArray[2])
+        var parts = Marshal.PtrToStringUTF8((nint)AtkStage.Instance()->GetStringArrayData()[32]->StringArray[2])
                            .Split('/');
 
         var capAmount = int.Parse(parts[1].Replace(",", ""));

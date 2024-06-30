@@ -15,7 +15,7 @@ public class IPCManager : IDailyManager
     internal Dictionary<Type, DailyIPCBase> IPCs = [];
     internal Dictionary<Type, HashSet<DailyModuleBase>> IPCRegState = [];
 
-    private List<InstalledPluginState>? LastInstalledPluginStates;
+    private List<IExposedPlugin>? LastInstalledPluginStates;
     private Dictionary<string, Action>? MethodsInfo;
 
     private void Init()

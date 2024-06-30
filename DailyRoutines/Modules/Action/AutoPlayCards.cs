@@ -86,7 +86,7 @@ public unsafe class AutoPlayCards : DailyModuleBase
                                                                           .Address) <= 30)
                                 .ToList();
 
-        PartyMember? member = null;
+        IPartyMember? member = null;
         if (indices.Count > 0)
         {
             var rnd = new Random();
@@ -147,5 +147,5 @@ public unsafe class AutoPlayCards : DailyModuleBase
         base.Uninit();
     }
 
-    private record SendInfo(PartyMember member, (bool IsMelee, string Name) card);
+    private record SendInfo(IPartyMember member, (bool IsMelee, string Name) card);
 }

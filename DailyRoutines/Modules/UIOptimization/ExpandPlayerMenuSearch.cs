@@ -96,7 +96,7 @@ public class ExpandPlayerMenuSearch : DailyModuleBase
             UpdateConfig("TiebaEnabled", TiebaEnabled);
     }
 
-    private static void OnMenuOpen(MenuOpenedArgs args)
+    private static void OnMenuOpen(IMenuOpenedArgs args)
     {
         if (!IsValidAddon(args)) return;
         if (args.MenuType != ContextMenuType.Default) return;
@@ -106,7 +106,7 @@ public class ExpandPlayerMenuSearch : DailyModuleBase
         if (TiebaEnabled) args.AddMenuItem(TiebaItem);
     }
 
-    private static void OnClickRisingStone(MenuItemClickedArgs args)
+    private static void OnClickRisingStone(IMenuItemClickedArgs args)
     {
         Task.Run(async () =>
         {
@@ -148,19 +148,19 @@ public class ExpandPlayerMenuSearch : DailyModuleBase
         });
     }
 
-    private static void OnClickFFLogs(MenuItemClickedArgs args)
+    private static void OnClickFFLogs(IMenuItemClickedArgs args)
     {
         if (_TargetChara == null) return;
         Util.OpenLink(string.Format(FFLogsSearch, _TargetChara.World, _TargetChara.Name));
     }
 
-    private static void OnClickTieba(MenuItemClickedArgs args)
+    private static void OnClickTieba(IMenuItemClickedArgs args)
     {
         if (_TargetChara == null) return;
         Util.OpenLink(string.Format(TiebaSearch, $"{_TargetChara.Name}@{_TargetChara.World}"));
     }
 
-    private static unsafe bool IsValidAddon(MenuArgs args)
+    private static unsafe bool IsValidAddon(IMenuArgs args)
     {
         if (args.Target is MenuTargetInventory) return false;
         var menuTarget = (MenuTargetDefault)args.Target;
@@ -172,15 +172,14 @@ public class ExpandPlayerMenuSearch : DailyModuleBase
                              menuTarget.TargetHomeWorld.GameData != null &&
                              menuTarget.TargetHomeWorld.GameData.RowId != 0;
 
-        var judgeCriteria2 = menuTarget.TargetObject is Character && judgeCriteria1;
+        var judgeCriteria2 = menuTarget.TargetObject is ICharacter && judgeCriteria1;
 
         switch (args.AddonName)
         {
             default:
                 return false;
             case "BlackList":
-                var agentBlackList =
-                    (AgentBlacklist*)AgentModule.Instance()->GetAgentByInternalId(AgentId.SocialBlacklist);
+                var agentBlackList = AgentBlacklist.Instance();
 
                 if ((nint)agentBlackList != nint.Zero && agentBlackList->AgentInterface.IsAgentActive())
                 {
@@ -218,7 +217,7 @@ public class ExpandPlayerMenuSearch : DailyModuleBase
         {
             if (judgeCriteria0)
                 _TargetChara = menuTarget.TargetCharacter.ToCharacterSearchInfo();
-            else if (menuTarget.TargetObject is Character chara && judgeCriteria1)
+            else if (menuTarget.TargetObject is ICharacter chara && judgeCriteria1)
                 _TargetChara = chara.ToCharacterSearchInfo();
             else if (judgeCriteria1)
             {

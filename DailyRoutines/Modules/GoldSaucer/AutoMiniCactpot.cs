@@ -114,7 +114,7 @@ public unsafe class AutoMiniCactpot : DailyModuleBase
     private static bool? ClickGameNode(AddonLotteryDaily* addon, int i)
     {
         if (!Throttler.Throttle("AutoMiniCactpot", 50)) return false;
-        var nodeID = addon->GameBoard[i]->AtkComponentButton.AtkComponentBase.OwnerNode->AtkResNode.NodeID;
+        var nodeID = addon->GameBoard[i]->AtkComponentButton.AtkComponentBase.OwnerNode->AtkResNode.NodeId;
 
         ClickLotteryDaily.Using((nint)addon).Block(nodeID);
         return true;
@@ -125,7 +125,7 @@ public unsafe class AutoMiniCactpot : DailyModuleBase
         if (!Throttler.Throttle("AutoMiniCactpot", 50)) return false;
         if (i is < 0 or > 8) return false;
 
-        var nodeID = addon->LaneSelector[i]->AtkComponentBase.OwnerNode->AtkResNode.NodeID;
+        var nodeID = addon->LaneSelector[i]->AtkResNode->NodeId;
         var unkNumber3D4 = ClickLotteryDaily.Using((nint)addon).Line(nodeID);
         if (unkNumber3D4 == -1) return false;
         SelectedLineNumber3D4 = unkNumber3D4;

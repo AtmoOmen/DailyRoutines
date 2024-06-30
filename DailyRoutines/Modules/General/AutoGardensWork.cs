@@ -11,12 +11,10 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
 using Dalamud.Memory;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
-using FFXIVClientStructs.FFXIV.Client.Game.Housing;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -381,7 +379,7 @@ public unsafe class AutoGardensWork : DailyModuleBase
         {
             if (Vector3.Distance(gameObj.Position, Service.ClientState.LocalPlayer.Position) > 20) continue;
 
-            var objectID = gameObj.ObjectId;
+            var objectID = gameObj.GameObjectId;
             var zoneID = Service.ClientState.TerritoryType;
             var zoneName = LuminaCache.GetRow<TerritoryType>(zoneID).ExtractPlaceName();
             var garden = new GameGarden($"{zoneName}_{objectID}", objectID, zoneID, ward, plot);
@@ -443,7 +441,7 @@ public unsafe class AutoGardensWork : DailyModuleBase
         for (var i = 0; i < container->Size; i++)
         {
             var slot = container->GetInventorySlot(i);
-            if (slot->ItemID == ModuleConfig.SelectedFertilizer)
+            if (slot->ItemId == ModuleConfig.SelectedFertilizer)
             {
                 foundSlot = i;
                 break;

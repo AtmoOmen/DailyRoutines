@@ -58,7 +58,7 @@ public class AutoDismount : DailyModuleBase
         unsafe
         {
             TaskHelper.DelayNext(100);
-            TaskHelper.Enqueue(() => ActionManager.Instance()->UseAction(actionType, actionID, targetID, a4, queueState, a6));
+            TaskHelper.Enqueue(() => ActionManager.Instance()->UseAction(actionType, actionID, targetID, a4, ActionManager.UseActionMode.Queue, a6));
         }
     }
 

@@ -72,8 +72,8 @@ public unsafe class AutoRetainerWork : DailyModuleBase
     private static ItemConfig? SelectedItemConfig;
     private static ItemKey? CurrentItem;
     private static int CurrentItemIndex = -1;
-    private static List<MarketBoardHistory.MarketBoardHistoryListing>? ItemHistoryList;
-    private static List<MarketBoardCurrentOfferings.MarketBoardItemListing>? ItemSearchList;
+    private static List<IMarketBoardHistoryListing>? ItemHistoryList;
+    private static List<IMarketBoardItemListing>? ItemSearchList;
 
     private static readonly HashSet<ulong> PlayerRetainers = [];
 
@@ -368,9 +368,7 @@ public unsafe class AutoRetainerWork : DailyModuleBase
                            ? Service.Lang.GetText("AutoRetainerPriceAdjust-CommonItemPreset")
                            : item.Name.RawString;
 
-        var itemLogo = ImageHelper.GetIcon(
-            itemConfig.ItemID == 0 ? 65002 : (uint)item.Icon,
-            itemConfig.IsHQ ? ITextureProvider.IconFlags.ItemHighQuality : ITextureProvider.IconFlags.HiRes);
+        var itemLogo = ImageHelper.GetIcon(itemConfig.ItemID == 0 ? 65002 : (uint)item.Icon, itemConfig.IsHQ);
 
         var itemBuyingPrice = itemConfig.ItemID == 0 ? 1 : item.PriceLow;
 
@@ -946,9 +944,7 @@ public unsafe class AutoRetainerWork : DailyModuleBase
                 OrigPrice = RetainerSell->AtkValues[5].Int,
                 ItemPayload = new SeStringBuilder().AddItemLink(CurrentItem.ItemID, CurrentItem.IsHQ).Build(),
                 RetainerName = new SeStringBuilder()
-                               .AddUiForeground(
-                                   Marshal.PtrToStringUTF8((nint)RetainerManager.Instance()->GetActiveRetainer()->Name),
-                                   62).Build(),
+                               .AddUiForeground(RetainerManager.Instance()->GetActiveRetainer()->NameString, 62).Build(),
             };
 
             return result;
@@ -1117,8 +1113,8 @@ public unsafe class AutoRetainerWork : DailyModuleBase
         var agent2 = AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory);
         if (agent == null || agent2 == null || !agent->IsAgentActive()) return false;
 
-        var addon = RaptureAtkUnitManager.Instance()->GetAddonById((ushort)agent->GetAddonID());
-        var addon2 = RaptureAtkUnitManager.Instance()->GetAddonById((ushort)agent2->GetAddonID());
+        var addon = RaptureAtkUnitManager.Instance()->GetAddonById((ushort)agent->GetAddonId());
+        var addon2 = RaptureAtkUnitManager.Instance()->GetAddonById((ushort)agent2->GetAddonId());
 
         if (addon != null) addon->Close(true);
         if (addon2 != null) AddonHelper.Callback(addon2, true, -1);
@@ -1169,7 +1165,7 @@ public unsafe class AutoRetainerWork : DailyModuleBase
         for (var i = 0; i < PlayerRetainers.Count; i++)
         {
             var index = i;
-            var marketItemCount = retainerManager->GetRetainerBySortedIndex((uint)i)->MarkerItemCount;
+            var marketItemCount = retainerManager->GetRetainerBySortedIndex((uint)i)->MarketItemCount;
             if (marketItemCount <= 0) continue;
 
             TaskHelper.Enqueue(() => ClickSpecificRetainer(index));
@@ -1201,7 +1197,7 @@ public unsafe class AutoRetainerWork : DailyModuleBase
     private void EnqueueItemsPriceAdjust()
     {
         var retainerManager = RetainerManager.Instance();
-        var marketItemCount = retainerManager->GetActiveRetainer()->MarkerItemCount;
+        var marketItemCount = retainerManager->GetActiveRetainer()->MarketItemCount;
 
         if (marketItemCount == 0)
         {
@@ -1412,7 +1408,7 @@ public unsafe class AutoRetainerWork : DailyModuleBase
                 var agent = AgentModule.Instance()->GetAgentByInternalId(AgentId.Retainer);
                 if (agent == null || !agent->IsAgentActive()) return false;
 
-                var addon = RaptureAtkUnitManager.Instance()->GetAddonById((ushort)agent->GetAddonID());
+                var addon = RaptureAtkUnitManager.Instance()->GetAddonById((ushort)agent->GetAddonId());
                 if (addon == null) return false;
 
                 AddonHelper.Callback(addon, true, 0);
@@ -1459,7 +1455,7 @@ public unsafe class AutoRetainerWork : DailyModuleBase
             var retainer = retainerManager->GetRetainerBySortedIndex(i);
             if (retainer == null) break;
 
-            PlayerRetainers.Add(retainer->RetainerID);
+            PlayerRetainers.Add(retainer->RetainerId);
         }
     }
 
@@ -1643,8 +1639,8 @@ public unsafe class AutoRetainerWork : DailyModuleBase
             for (var i = 0; i < container->Size; i++)
             {
                 var slot = container->GetInventorySlot(i);
-                if (slot == null || slot->ItemID == 0) continue;
-                if (slot->ItemID == itemID && (!isHQ || (isHQ && slot->Flags.HasFlag(InventoryItem.ItemFlags.HQ))))
+                if (slot == null || slot->ItemId == 0) continue;
+                if (slot->ItemId == itemID && (!isHQ || (isHQ && slot->Flags.HasFlag(InventoryItem.ItemFlags.HighQuality))))
                     foundItem.Add(*slot);
             }
         }
@@ -1673,9 +1669,9 @@ public unsafe class AutoRetainerWork : DailyModuleBase
         var inventory2 = (AtkUnitBase*)Service.Gui.GetAddonByName("InventoryExpansion");
         if (inventory2 == null) return 0;
 
-        if (IsAddonAndNodesReady(inventory0)) return inventory0->ID;
-        if (IsAddonAndNodesReady(inventory1)) return inventory1->ID;
-        if (IsAddonAndNodesReady(inventory2)) return inventory2->ID;
+        if (IsAddonAndNodesReady(inventory0)) return inventory0->Id;
+        if (IsAddonAndNodesReady(inventory1)) return inventory1->Id;
+        if (IsAddonAndNodesReady(inventory2)) return inventory2->Id;
 
         return 0;
     }
@@ -1706,7 +1702,7 @@ public unsafe class AutoRetainerWork : DailyModuleBase
         if (data.CatalogId != CurrentItem.ItemID)
             return MarketboardHistoryHook.Original(a1, packetData);
 
-        ItemHistoryList ??= data.HistoryListings;
+        ItemHistoryList ??= data.HistoryListings.ToList();
         return MarketboardHistoryHook.Original(a1, packetData);
     }
 
@@ -1716,8 +1712,8 @@ public unsafe class AutoRetainerWork : DailyModuleBase
         if (CurrentItem == null)
             return InfoProxyItemSearchAddPageHook.Original(a1, packetData);
 
-        var data = MarketBoardCurrentOfferings.Read((nint)packetData);
-        if (data.ItemListings.Count > 0 && data.ItemListings[0].CatalogId == CurrentItem.ItemID)
+        var data = (IMarketBoardCurrentOfferings)MarketBoardCurrentOfferings.Read((nint)packetData);
+        if (data.ItemListings.Count > 0 && data.ItemListings[0].ItemId == CurrentItem.ItemID)
         {
             ItemSearchList ??= [];
             ItemSearchList.AddRange(data.ItemListings);

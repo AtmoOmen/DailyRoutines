@@ -23,7 +23,7 @@ public unsafe class NoAttackWrongMandragoras : DailyModuleBase
 
     private static List<uint[]>? Mandragoras;
 
-    private static readonly List<BattleNpc> ValidBattleNPCs = [];
+    private static readonly List<IBattleNpc> ValidBattleNPCs = [];
 
     // 水城, 运河, 运河深层, 运河神殿, 梦羽宝境, 梦羽宝殿, 惊奇, 育体
     private static readonly HashSet<uint> ValidZones = [558, 712, 725, 794, 879, 924, 1000, 1123];
@@ -66,12 +66,12 @@ public unsafe class NoAttackWrongMandragoras : DailyModuleBase
             {
                 var distance = Vector3.Distance(Service.ClientState.LocalPlayer.Position, obj.Position);
                 if (distance > 45) continue;
-                if (obj.IsValid() && obj is BattleNpc { IsDead: false } battleObj)
+                if (obj.IsValid() && obj is IBattleNpc { IsDead: false } battleObj)
                     ValidBattleNPCs.Add(battleObj);
             }
         }
 
-        var objID = potentialTarget->GetNpcID();
+        var objID = potentialTarget->GetNameId();
         foreach (var mandragoraSeries in Mandragoras)
         {
             var index = Array.IndexOf(mandragoraSeries, objID);
@@ -81,9 +81,9 @@ public unsafe class NoAttackWrongMandragoras : DailyModuleBase
                 {
                     var mandragora =
                         ValidBattleNPCs.FirstOrDefault(
-                            x => ((GameObject*)x.Address)->GetNpcID() == mandragoraSeries[i]);
+                            x => ((GameObject*)x.Address)->BaseId == mandragoraSeries[i]);
 
-                    if (mandragora != null && !mandragora.IsDead && mandragora.IsValid())
+                    if (mandragora is { IsDead: false } && mandragora.IsValid())
                         return 0;
                 }
 

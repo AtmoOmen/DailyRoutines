@@ -24,9 +24,9 @@ public class Configuration : IPluginConfiguration
     public HashSet<string>          ModuleFavorites             { get; set; } = [];
 
     [NonSerialized]
-    private DalamudPluginInterface? pluginInterface;
+    private IDalamudPluginInterface? pluginInterface;
 
-    public void Initialize(DalamudPluginInterface pInterface)
+    public void Initialize(IDalamudPluginInterface pInterface)
     {
         pluginInterface = pInterface;
 

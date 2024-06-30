@@ -110,7 +110,7 @@ public unsafe class PlayerTargetInfoExpand : DailyModuleBase
                 if (ImGui.InputText($"###{categoryTitle}", ref config, 64))
                     SaveConfig(ModuleConfig);
 
-                if (Service.ClientState.LocalPlayer != null && Service.ClientState.LocalPlayer is Character chara)
+                if (Service.ClientState.LocalPlayer != null && Service.ClientState.LocalPlayer is ICharacter chara)
                 {
                     ImGui.TableNextRow();
 
@@ -137,13 +137,13 @@ public unsafe class PlayerTargetInfoExpand : DailyModuleBase
         // 目标
         var target = Service.Target.Target;
         var node0 = addon->GetTextNodeById(16);
-        if (node0 != null && target is Character { ObjectKind: ObjectKind.Player } chara0)
+        if (node0 != null && target is ICharacter { ObjectKind: ObjectKind.Player } chara0)
             node0->SetText(ReplacePatterns(ModuleConfig.TargetPattern, Payloads, chara0));
 
         // 目标的目标
         var targetsTarget = Service.Target.Target?.TargetObject;
         var node1 = addon->GetTextNodeById(7);
-        if (node1 != null && targetsTarget is Character { ObjectKind: ObjectKind.Player } chara1)
+        if (node1 != null && targetsTarget is ICharacter { ObjectKind: ObjectKind.Player } chara1)
             node1->SetText(ReplacePatterns(ModuleConfig.TargetsTargetPattern, Payloads, chara1));
     }
 
@@ -155,13 +155,13 @@ public unsafe class PlayerTargetInfoExpand : DailyModuleBase
         // 目标
         var target = Service.Target.Target;
         var node0 = addon->GetTextNodeById(10);
-        if (node0 != null && target is Character { ObjectKind: ObjectKind.Player } chara0)
+        if (node0 != null && target is ICharacter { ObjectKind: ObjectKind.Player } chara0)
             node0->SetText(ReplacePatterns(ModuleConfig.TargetPattern, Payloads, chara0));
 
         // 目标的目标
         var targetsTarget = Service.Target.Target?.TargetObject;
         var node1 = addon->GetTextNodeById(7);
-        if (node1 != null && targetsTarget is Character { ObjectKind: ObjectKind.Player } chara1)
+        if (node1 != null && targetsTarget is ICharacter { ObjectKind: ObjectKind.Player } chara1)
             node1->SetText(ReplacePatterns(ModuleConfig.TargetsTargetPattern, Payloads, chara1));
     }
 
@@ -173,11 +173,11 @@ public unsafe class PlayerTargetInfoExpand : DailyModuleBase
         // 焦点目标
         var target = Service.Target.FocusTarget;
         var node0 = addon->GetTextNodeById(10);
-        if (node0 != null && target is Character { ObjectKind: ObjectKind.Player } chara0)
+        if (node0 != null && target is ICharacter { ObjectKind: ObjectKind.Player } chara0)
             node0->SetText(ReplacePatterns(ModuleConfig.FocusTargetPattern, Payloads, chara0));
     }
 
-    private static string ReplacePatterns(string input, IEnumerable<Payload> payloads, Character chara)
+    private static string ReplacePatterns(string input, IEnumerable<Payload> payloads, ICharacter chara)
     {
         foreach (var payload in payloads)
             input = input.Replace(payload.Placeholder, payload.ValueFunc(chara));
@@ -194,11 +194,11 @@ public unsafe class PlayerTargetInfoExpand : DailyModuleBase
         base.Uninit();
     }
 
-    private class Payload(string placeholder, string description, Func<Character, string> valueFunc)
+    private class Payload(string placeholder, string description, Func<ICharacter, string> valueFunc)
     {
         public string                  Placeholder { get; } = placeholder;
         public string                  Description { get; } = description;
-        public Func<Character, string> ValueFunc   { get; } = valueFunc;
+        public Func<ICharacter, string> ValueFunc   { get; } = valueFunc;
     }
 
     private class Config : ModuleConfiguration

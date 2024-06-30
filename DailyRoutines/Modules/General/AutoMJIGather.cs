@@ -13,7 +13,7 @@ using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Hooking;
 using Dalamud.Interface;
-using Dalamud.Interface.Internal;
+using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Memory;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -512,8 +512,7 @@ public class AutoMJIGather : DailyModuleBase
         return IsOnDiving;
     }
 
-    private void OnChatMessage(
-        XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
+    private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
     {
         if (!ModuleConfig.StopWhenReachingCap) return;
         if (!TaskHelper.IsBusy || (ushort)type != 2108) return;

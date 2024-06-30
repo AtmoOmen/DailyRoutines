@@ -89,7 +89,7 @@ public class AutoTankStance : DailyModuleBase
 
         var battlePlayer = (BattleChara*)player.Address;
         foreach (var status in TankStanceStatuses)
-            if (battlePlayer->GetStatusManager->HasStatus(status))
+            if (battlePlayer->GetStatusManager()->HasStatus(status))
                 return true;
 
         return ActionManager.Instance()->UseAction(ActionType.Action, actionID);

@@ -7,9 +7,8 @@ using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using DailyRoutines.Modules;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
-using FFXIVClientStructs.FFXIV.Client.Game.Housing;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using ImGuiNET;
@@ -135,23 +134,23 @@ public unsafe class Debug() : Window("Daily Routines - 调试窗口###DailyRouti
                 ImGui.TableNextColumn();
                 ImGui.Text("Area PlaceName ID");
                 ImGui.TableNextColumn();
-                ImGui.Text($"{infoInstance->AreaPlaceNameID}");
+                ImGui.Text($"{infoInstance->AreaPlaceNameId}");
 
                 ImGui.TableNextColumn();
                 ImGui.Text("Area PlaceName Name");
                 ImGui.TableNextColumn();
-                ImGui.Text($"{LuminaCache.GetRow<PlaceName>(infoInstance->AreaPlaceNameID).Name.RawString}");
+                ImGui.Text($"{LuminaCache.GetRow<PlaceName>(infoInstance->AreaPlaceNameId).Name.RawString}");
 
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
                 ImGui.Text("Sub-Area PlaceName ID");
                 ImGui.TableNextColumn();
-                ImGui.Text($"{infoInstance->SubAreaPlaceNameID}");
+                ImGui.Text($"{infoInstance->SubAreaPlaceNameId}");
 
                 ImGui.TableNextColumn();
                 ImGui.Text("Sub-Area PlaceName Name");
                 ImGui.TableNextColumn();
-                ImGui.Text($"{LuminaCache.GetRow<PlaceName>(infoInstance->SubAreaPlaceNameID).Name.RawString}");
+                ImGui.Text($"{LuminaCache.GetRow<PlaceName>(infoInstance->SubAreaPlaceNameId).Name.RawString}");
 
                 ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
                 ImGui.TableNextColumn();

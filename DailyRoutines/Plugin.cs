@@ -19,7 +19,7 @@ public sealed class Plugin : IDalamudPlugin
 
     private static bool IsDev;
 
-    public Plugin(DalamudPluginInterface pluginInterface)
+    public Plugin(IDalamudPluginInterface pluginInterface)
     {
 #if RELEASE
         if (pluginInterface.IsDev)

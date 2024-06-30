@@ -334,7 +334,7 @@ public unsafe class BetterFollow : DailyModuleBase
                 !((Character*)followObject.Address)->IsMounted() &&
                 Service.Condition[ConditionFlag.Mounted])
             {
-                ((BattleChara*)followObject.Address)->GetStatusManager->
+                ((BattleChara*)followObject.Address)->GetStatusManager()->
                     RemoveStatus(10);
 
                 ActionManager.Instance()->UseAction(ActionType.GeneralAction, 9);
@@ -473,8 +473,8 @@ public unsafe class BetterFollow : DailyModuleBase
         if (_FollowStatus) return;
         if (objectAddress == 0) return;
         _LastFollowObjectAddress = objectAddress;
-        _LastFollowObjectId = (*(GameObject*)objectAddress).ObjectID;
-        _LastFollowObjectName = Service.ObjectTable.SearchById((*(GameObject*)objectAddress).ObjectID).Name
+        _LastFollowObjectId = (*(GameObject*)objectAddress).GetGameObjectId().ObjectId;
+        _LastFollowObjectName = Service.ObjectTable.SearchById((*(GameObject*)objectAddress).GetGameObjectId().ObjectId).Name
                                        .ToString();
 
         switch (ModuleConfig.MoveType)
@@ -499,8 +499,8 @@ public unsafe class BetterFollow : DailyModuleBase
 
         //获取跟随对象
         _LastFollowObjectAddress = a2;
-        _LastFollowObjectId = (*(GameObject*)a2).ObjectID;
-        _LastFollowObjectName = Service.ObjectTable.SearchById((*(GameObject*)a2).ObjectID).Name.ToString();
+        _LastFollowObjectId = (*(GameObject*)a2).GetGameObjectId().ObjectId;
+        _LastFollowObjectName = Service.ObjectTable.SearchById((*(GameObject*)a2).GetGameObjectId().ObjectId).Name.ToString();
         if (ModuleConfig.MoveType == MoveTypeList.Navmesh)
         {
             //停止系统跟随

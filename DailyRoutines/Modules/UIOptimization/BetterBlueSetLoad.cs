@@ -86,7 +86,7 @@ public unsafe class BetterBlueSetLoad : DailyModuleBase
         var actionManager = ActionManager.Instance();
 
         Span<uint> presetActions = stackalloc uint[24];
-        fixed (uint* actions = blueModule->ActiveSetsSpan[index].ActiveActions)
+        fixed (uint* actions = blueModule->ActiveSets[index].ActiveActions)
         {
             for (var i = 0; i < 24; i++)
             {

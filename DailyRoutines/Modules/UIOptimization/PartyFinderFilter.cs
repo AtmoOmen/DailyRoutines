@@ -97,7 +97,7 @@ public class PartyFinderFilter : DailyModuleBase
         }
     }
 
-    private void OnReceiveListing(PartyFinderListing listing, PartyFinderListingEventArgs args)
+    private void OnReceiveListing(IPartyFinderListing listing, IPartyFinderListingEventArgs args)
     {
         if (batchIndex != args.BatchNumber)
         {
@@ -108,7 +108,7 @@ public class PartyFinderFilter : DailyModuleBase
         args.Visible = args.Visible && Verify(listing);
     }
 
-    private bool Verify(PartyFinderListing listing)
+    private bool Verify(IPartyFinderListing listing)
     {
         var description = listing.Description.ToString();
         if (!string.IsNullOrEmpty(description) && !descriptionSet.Add(description))

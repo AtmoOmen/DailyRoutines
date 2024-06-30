@@ -117,7 +117,7 @@ public unsafe class AutoLeveQuests : DailyModuleBase
                                         ImGui.SameLine();
                                         ImGui.Text(LeveMete == null
                                                        ? Service.Lang.GetText("AutoLeveQuests-ObtainHelp")
-                                                       : $"{Marshal.PtrToStringUTF8((nint)LeveMete->Name)} ({LeveMete->DataID})");
+                                                       : $"{LeveMete->NameString} ({LeveMete->BaseId})");
 
                                         ScaledDummy(2f);
 
@@ -127,7 +127,7 @@ public unsafe class AutoLeveQuests : DailyModuleBase
                                         ImGui.SameLine();
                                         ImGui.Text(LeveReceiver == null
                                                        ? Service.Lang.GetText("AutoLeveQuests-ObtainHelp")
-                                                       : $"{Marshal.PtrToStringUTF8((nint)LeveReceiver->Name)} ({LeveReceiver->DataID})");
+                                                       : $"{LeveReceiver->NameString} ({LeveReceiver->BaseId})");
                                     },
                                     [
                                         new(TaskHelper.IsBusy,
@@ -238,7 +238,7 @@ public unsafe class AutoLeveQuests : DailyModuleBase
 
         AgentHelper.SendEvent(AgentId.LeveQuest, 0, 3, SelectedLeve.RowId);
 
-        return QuestManager.Instance()->LeveQuestsSpan.ToArray().Select(x => (LeveWork?)x)
+        return QuestManager.Instance()->LeveQuests.ToArray().Select(x => (LeveWork?)x)
                                                       .FirstOrDefault(
                                                           x => x.HasValue && x.Value.LeveId == SelectedLeve.RowId) != null;
     }
@@ -270,7 +270,7 @@ public unsafe class AutoLeveQuests : DailyModuleBase
 
     private bool? CheckIfMultipleLevesToSubmit()
     {
-        var levesSpan = QuestManager.Instance()->LeveQuestsSpan;
+        var levesSpan = QuestManager.Instance()->LeveQuests;
         var qualifiedCount = 0;
 
         // 判断是否为当前地图的理符

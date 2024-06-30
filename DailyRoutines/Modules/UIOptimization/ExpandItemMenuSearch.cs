@@ -165,7 +165,7 @@ public unsafe class ExpandItemMenuSearch : DailyModuleBase
                             for (var i = 0; i < container->Size; i++)
                             {
                                 var item = container->GetInventorySlot(i);
-                                if (item == null || item->ItemID == 0) continue;
+                                if (item == null || item->ItemId == 0) continue;
 
                                 _CharacterInspectItems.Add(*item);
                             }
@@ -224,7 +224,7 @@ public unsafe class ExpandItemMenuSearch : DailyModuleBase
             _LastDetailItemID = id;
     }
 
-    private static void OnMenuOpened(MenuOpenedArgs args)
+    private static void OnMenuOpened(IMenuOpenedArgs args)
     {
         _LastItem = null;
         _LastGlamourItem = null;
@@ -304,7 +304,7 @@ public unsafe class ExpandItemMenuSearch : DailyModuleBase
             case "CharacterInspect":
             {
                 if (!PresetData.Gears.TryGetValue((uint)_LastHoveredItemID, out var inspectItem)) return;
-                var glamourID = _CharacterInspectItems.FirstOrDefault(x => x.ItemID == _LastHoveredItemID).GlamourID;
+                var glamourID = _CharacterInspectItems.FirstOrDefault(x => x.ItemId == _LastHoveredItemID).GlamourId;
 
                 _LastItem = inspectItem;
                 _LastGlamourItem = PresetData.Gears.GetValueOrDefault(glamourID, _LastItem);
@@ -354,7 +354,7 @@ public unsafe class ExpandItemMenuSearch : DailyModuleBase
         }
     }
 
-    private static void OnCollector(MenuItemClickedArgs args)
+    private static void OnCollector(IMenuItemClickedArgs args)
     {
         if (args.AddonName == "MiragePrismPrismBoxCrystallize" &&
             TryGetAddonByName<AtkUnitBase>("ContextMenu", out var addon) && IsAddonAndNodesReady(addon))
@@ -372,7 +372,7 @@ public unsafe class ExpandItemMenuSearch : DailyModuleBase
             Util.OpenLink(string.Format(CollectorUrl, _LastItem.Name));
     }
 
-    private static void OnWiki(MenuItemClickedArgs args)
+    private static void OnWiki(IMenuItemClickedArgs args)
     {
         if (args.AddonName == "MiragePrismPrismBoxCrystallize" &&
             TryGetAddonByName<AtkUnitBase>("ContextMenu", out var addon) && IsAddonAndNodesReady(addon))

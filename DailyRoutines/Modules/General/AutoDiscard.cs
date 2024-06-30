@@ -193,7 +193,7 @@ public unsafe class AutoDiscard : DailyModuleBase
             for (var i = 0; i < container->Size; i++)
             {
                 var slot = container->GetInventorySlot(i);
-                if (slot->ItemID == itemID) foundItem.Add(*slot);
+                if (slot->ItemId == itemID) foundItem.Add(*slot);
             }
         }
 
@@ -277,7 +277,7 @@ public unsafe class AutoDiscard : DailyModuleBase
         if (SelectYesno == null || !IsAddonAndNodesReady(SelectYesno)) return false;
 
         var handler = new ClickSelectYesNo();
-        if (SelectYesno->GetNodeById(4)->IsVisible) handler.Confirm();
+        if (SelectYesno->GetNodeById(4)->IsVisible()) handler.Confirm();
         handler.Yes();
 
         return true;
@@ -295,9 +295,9 @@ public unsafe class AutoDiscard : DailyModuleBase
         var inventory2 = (AtkUnitBase*)Service.Gui.GetAddonByName("InventoryExpansion");
         if (inventory2 == null) return 0;
 
-        if (IsAddonAndNodesReady(inventory0)) return inventory0->ID;
-        if (IsAddonAndNodesReady(inventory1)) return inventory1->ID;
-        if (IsAddonAndNodesReady(inventory2)) return inventory2->ID;
+        if (IsAddonAndNodesReady(inventory0)) return inventory0->Id;
+        if (IsAddonAndNodesReady(inventory1)) return inventory1->Id;
+        if (IsAddonAndNodesReady(inventory2)) return inventory2->Id;
 
         return 0;
     }

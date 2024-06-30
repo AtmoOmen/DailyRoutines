@@ -300,7 +300,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
         }
     }
 
-    private static void OnMenuOpened(MenuOpenedArgs args)
+    private static void OnMenuOpened(IMenuOpenedArgs args)
     {
         if (args.Target is not MenuTargetInventory { TargetItem: not null } iTarget) return;
         if (iTarget.TargetItem.Value.Quantity <= 1) return;
@@ -308,7 +308,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
         args.AddMenuItem(FastSplitItem);
     }
 
-    private void OnFastSplit(MenuItemClickedArgs args)
+    private void OnFastSplit(IMenuItemClickedArgs args)
     {
         if (args.Target is not MenuTargetInventory { TargetItem: not null } iTarget) return;
         if (iTarget.TargetItem.Value.Quantity <= 1) return;
@@ -373,7 +373,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
             for (var i = 0; i < container->Size; i++)
             {
                 var slot = container->GetInventorySlot(i);
-                if (slot->ItemID == itemID)
+                if (slot->ItemId == itemID)
                 {
                     if (slot->GetQuantity() > amount)
                     {
@@ -427,7 +427,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
             for (var index = 0; index < container->Size; index++)
             {
                 var slot = container->GetInventorySlot(index);
-                if (slot->ItemID == 0) return false;
+                if (slot->ItemId == 0) return false;
             }
         }
 

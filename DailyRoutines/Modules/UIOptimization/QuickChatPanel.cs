@@ -742,7 +742,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
                 for (var i = 0; i < AddonState.ChatLog->UldManager.NodeListCount; i++)
                 {
                     var node = AddonState.ChatLog->UldManager.NodeList[i];
-                    if (node->NodeID == 10001)
+                    if (node->NodeId == 10001)
                     {
                         iconNode = node;
                         break;
@@ -756,7 +756,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
                     iconNode->SetPositionFloat(ButtonPos.X, ButtonPos.Y);
                     iconNode->SetHeight(ModuleConfig.ButtonSize);
                     iconNode->SetWidth(ModuleConfig.ButtonSize);
-                    ((AtkImageNode*)iconNode)->LoadIconTexture(ModuleConfig.ButtonIcon, 0);
+                    ((AtkImageNode*)iconNode)->LoadIconTexture((uint)ModuleConfig.ButtonIcon, 0);
                 }
 
                 break;
@@ -803,7 +803,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
         for (var i = 0; i < AddonState.ChatLog->UldManager.NodeListCount; i++)
         {
             var node = AddonState.ChatLog->UldManager.NodeList[i];
-            if (node->NodeID == 10001)
+            if (node->NodeId == 10001)
             {
                 UnlinkAndFreeImageNode((AtkImageNode*)node, AddonState.ChatLog);
                 Service.AddonEvent.RemoveEvent(MouseClickHandle);
