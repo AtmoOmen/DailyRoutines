@@ -342,7 +342,7 @@ public unsafe class CustomizeGameObject : DailyModuleBase
             ImGui.Text($"{Service.Lang.GetText("Name")}:");
 
             ImGui.TableNextColumn();
-            var targetName = Marshal.PtrToStringUTF8((nint)currentTarget->Name);
+            var targetName = currentTarget->NameString;
             ImGui.SetNextItemWidth(-1f);
             ImGui.InputText("###TargetNamePreview", ref targetName, 128, ImGuiInputTextFlags.ReadOnly);
 
@@ -353,7 +353,7 @@ public unsafe class CustomizeGameObject : DailyModuleBase
             ImGui.Text("Data ID:");
 
             ImGui.TableNextColumn();
-            var targetDataID = currentTarget->DataID.ToString();
+            var targetDataID = currentTarget->ObjectKind.ToString();
             ImGui.SetNextItemWidth(-1f);
             ImGui.InputText("###TargetDataIDPreview", ref targetDataID, 128, ImGuiInputTextFlags.ReadOnly);
 
@@ -364,7 +364,7 @@ public unsafe class CustomizeGameObject : DailyModuleBase
             ImGui.Text("Object ID:");
 
             ImGui.TableNextColumn();
-            var targetObjectID = currentTarget->ObjectID.ToString();
+            var targetObjectID = currentTarget->GetGameObjectId().ObjectId.ToString();
             ImGui.SetNextItemWidth(-1f);
             ImGui.InputText("###TargetObjectIDPreview", ref targetObjectID, 128, ImGuiInputTextFlags.ReadOnly);
 
@@ -404,9 +404,9 @@ public unsafe class CustomizeGameObject : DailyModuleBase
         if (AddonState.CharacterInspect != null || AddonState.CharaCard != null) return isTargetable;
         if (ModuleConfig.CustomizePresets.Count == 0 || !pTarget->IsReadyToDraw() || !pTarget->IsCharacter()) return isTargetable;
 
-        var name = Marshal.PtrToStringUTF8((nint)pTarget->Name);
-        var dataID = pTarget->DataID.ToString();
-        var objectID = pTarget->ObjectID.ToString();
+        var name = pTarget->NameString;
+        var dataID = pTarget->BaseId.ToString();
+        var objectID = pTarget->GetGameObjectId().ObjectId.ToString();
         var charaData = ((CharacterStruct*)pTarget)->CharacterData;
         var modelCharaID = charaData.ModelCharaId.ToString();
         var modelSkeletonID = charaData.ModelSkeletonId.ToString();

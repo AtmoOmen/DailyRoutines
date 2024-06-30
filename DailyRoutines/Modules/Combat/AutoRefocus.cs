@@ -46,11 +46,11 @@ public unsafe class AutoRefocus : DailyModuleBase
     {
         if (objectID == 0xE000_0000)
         {
-            objectID = Service.Target.Target?.ObjectId ?? 0xE000_0000;
-            FocusTarget = Service.Target.Target?.ObjectId;
+            objectID = Service.Target.Target?.GameObjectId ?? 0xE000_0000;
+            FocusTarget = Service.Target.Target?.GameObjectId;
         }
         else
-            FocusTarget = Service.Target.Target.ObjectId;
+            FocusTarget = Service.Target.Target.GameObjectId;
 
         SetFocusTargetByObjectIDHook.Original(targetSystem, objectID);
     }

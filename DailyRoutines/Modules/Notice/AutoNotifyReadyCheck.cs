@@ -10,8 +10,7 @@ public class AutoNotifyReadyCheck : DailyModuleBase
 {
     public override void Init() { Service.Chat.ChatMessage += OnChatMessage; }
 
-    private static void OnChatMessage(
-        XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
+    private static void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool ishandled)
     {
         var uintType = (uint)type;
         if (uintType != 57 && uintType != 313 && uintType != 569) return;

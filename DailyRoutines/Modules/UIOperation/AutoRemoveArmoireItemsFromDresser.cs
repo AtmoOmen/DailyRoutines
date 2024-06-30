@@ -35,7 +35,7 @@ public unsafe class AutoRemoveArmoireItemsFromDresser : DailyModuleBase
         {
             if (AddonMiragePrismPrismBox == null) return;
             var instance = MirageManager.Instance();
-            for (var i = 0U; i < 800U; i++)
+            for (var i = 0; i < 800; i++)
             {
                 var item = instance->PrismBoxItemIds[i];
                 if (item == 0) continue;
@@ -43,7 +43,7 @@ public unsafe class AutoRemoveArmoireItemsFromDresser : DailyModuleBase
                 if (ArmoireAvailableItems.Contains(itemID))
                 {
                     var index = i;
-                    TaskHelper.Enqueue(() => instance->RestorePrismBoxItem(index));
+                    TaskHelper.Enqueue(() => instance->RestorePrismBoxItem((uint)index));
                     TaskHelper.DelayNext(100);
                 }
             }

@@ -117,7 +117,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
                     [new("物品", ImGuiTableColumnFlags.WidthStretch, 0)],
                     [x => () =>
                     {
-                        var icon = ImageHelper.GetIcon(x.Icon, SelectItemIsHQ ? ITextureProvider.IconFlags.ItemHighQuality : ITextureProvider.IconFlags.None);
+                        var icon = ImageHelper.GetIcon(x.Icon, SelectItemIsHQ);
 
                         if (ImGuiOm.SelectableImageWithText(icon.ImGuiHandle, ScaledVector2(20f),
                                                             x.Name, x.RowId == SelectedItem,
@@ -299,7 +299,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
         var statusIndex = statusManager->GetStatusIndex(48);
         if (statusIndex == -1) return false;
 
-        var status = statusManager->StatusSpan[statusIndex];
+        var status = statusManager->Status[statusIndex];
         itemFoodRowID = status.Param;
         remainingTime = TimeSpan.FromSeconds(status.RemainingTime);
         return true;

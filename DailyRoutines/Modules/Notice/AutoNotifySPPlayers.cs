@@ -241,7 +241,7 @@ public unsafe class AutoNotifySPPlayers : DailyModuleBase
         foreach (var config in ModuleConfig.NotifiedPlayer)
         {
             bool[] checks = [true, true, true];
-            var playerName = MemoryHelper.ReadSeStringNullTerminated((nint)obj->Name).TextValue;
+            var playerName = obj->NameString;
 
             if (!string.IsNullOrWhiteSpace(config.Name))
             {

@@ -122,7 +122,7 @@ public class AutoStoreToCabinet : DailyModuleBase
                     var slot = container->GetInventorySlot(i);
                     if (slot == null) continue;
 
-                    var item = slot->ItemID;
+                    var item = slot->ItemId;
                     if (item == 0) continue;
 
                     if (!CabinetItems.TryGetValue(item, out var index)) continue;

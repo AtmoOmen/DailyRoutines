@@ -193,10 +193,10 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
                 var slot = container->GetInventorySlot(i);
                 if (slot == null) continue;
 
-                var item = slot->ItemID;
+                var item = slot->ItemId;
                 if (item == 0) continue;
 
-                if (!slot->Flags.HasFlag(InventoryItem.ItemFlags.HQ)) continue;
+                if (!slot->Flags.HasFlag(InventoryItem.ItemFlags.HighQuality)) continue;
 
                 list.Add(item);
             }

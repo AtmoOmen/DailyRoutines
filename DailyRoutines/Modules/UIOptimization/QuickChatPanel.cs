@@ -293,7 +293,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
                 ImGui.Text(Service.Lang.GetText($"QuickChatPanel-{(isIndividual ? "Individual" : "Shared")}Macros"));
                 ImGui.Separator();
 
-                var span = isIndividual ? module->IndividualSpan : module->SharedSpan;
+                var span = isIndividual ? module->Individual : module->Shared;
                 for (var i = 0; i < span.Length; i++)
                 {
                     var macro = span.GetPointer(i);
@@ -660,10 +660,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
                     if (itemName.Length > longestText.Length) longestText = itemName;
 
                     var isConflictKeyHolding = Service.KeyState[Service.Config.ConflictKey];
-                    var icon = ImageHelper.GetIcon(item.Icon,
-                                                   isConflictKeyHolding
-                                                       ? ITextureProvider.IconFlags.ItemHighQuality
-                                                       : ITextureProvider.IconFlags.None).ImGuiHandle;
+                    var icon = ImageHelper.GetIcon(item.Icon, isConflictKeyHolding).ImGuiHandle;
 
                     if (ImGuiOm.SelectableImageWithText(icon, ScaledVector2(24f), itemName, false))
                         Service.Chat.Print(new SeStringBuilder().AddItemLink(item.RowId, isConflictKeyHolding).Build());
@@ -775,7 +772,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
         imageNode->WrapMode = 1;
         imageNode->Flags = (byte)ImageNodeFlags.AutoFit;
 
-        imageNode->LoadIconTexture(icon, 0);
+        imageNode->LoadIconTexture((uint)icon, 0);
         imageNode->AtkResNode.ToggleVisibility(true);
 
         imageNode->AtkResNode.SetWidth(ModuleConfig.ButtonSize);
