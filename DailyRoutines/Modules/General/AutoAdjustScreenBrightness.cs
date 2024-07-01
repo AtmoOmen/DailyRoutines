@@ -5,205 +5,159 @@ using System.Linq;
 using System.Management;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using ImGuiNET;
-using Task = System.Threading.Tasks.Task;
 
 namespace DailyRoutines.Modules;
 
 [ModuleDescription("AutoAdjustScreenBrightnessTitle", "AutoAdjustScreenBrightnessDescription", ModuleCategories.一般)]
-public class AutoAdjustScreenBrightness : DailyModuleBase
+public class AutoAdjustScreenBrightness : DailyModuleBase, IDisposable
 {
-    private static int ScreenBrightness;
-    private static double SceneBrightness;
-
-    private static readonly ScreenHelper Screen = new();
-    private static int OriginalBrightness = 100;
-
-    private static CancellationTokenSource? CancellationTokenSource;
-    private static Config ModuleConfig = null!;
-
+    private static readonly ScreenHelper screenHelper = new();
+    private static readonly CancellationTokenSource cancelTokenSource = new();
+    private static Config moduleConfig = null!;
+    private static int originalBrightness = 100;
+    private static int currentScreenBrightness;
+    private static double currentSceneBrightness;
 
     public override void Init()
     {
-        ModuleConfig = LoadConfig<Config>() ?? new();
-
-        var origBrightness = Screen.GetCurrentBrightness();
-        OriginalBrightness = origBrightness + 10; // Windows 亮度设置的问题
-
-        CancellationTokenSource ??= new();
-        BrightnessMonitor(CancellationTokenSource.Token);
+        moduleConfig = LoadConfig<Config>() ?? new Config();
+        originalBrightness = screenHelper.GetCurrentBrightness() + 10;
+        _ = MonitorBrightnessAsync(cancelTokenSource.Token);
     }
 
     public override void ConfigUI()
     {
+        DisplayCurrentBrightness();
+        ConfigureSettings();
+    }
+
+    private static void DisplayCurrentBrightness()
+    {
         ImGui.BeginGroup();
-        ImGui.Text($"{Service.Lang.GetText("AutoAdjustScreenBrightness-CurrentScreenBrightness")}: {ScreenBrightness}%%");
+        ImGui.Text(
+            $"{Service.Lang.GetText("AutoAdjustScreenBrightness-CurrentScreenBrightness")}: {currentScreenBrightness}%");
 
         ImGui.SameLine();
         ImGui.Text(
-            $"{Service.Lang.GetText("AutoAdjustScreenBrightness-CurrentSceneBrightness")}: {Math.Round(SceneBrightness, 2)}%%");
+            $"{Service.Lang.GetText("AutoAdjustScreenBrightness-CurrentSceneBrightness")}: {Math.Round(currentSceneBrightness, 2)}%");
 
         ImGui.EndGroup();
 
-        ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin() - ScaledVector2(2f),
-                                          ImGui.GetItemRectMax() + ScaledVector2(2f),
-                                          ImGui.ColorConvertFloat4ToU32(ImGuiColors.DalamudWhite), 2f,
-                                          ImDrawFlags.RoundCornersAll, 3f);
+        ImGui.GetWindowDrawList().AddRect(
+            ImGui.GetItemRectMin() - ImGuiHelpers.ScaledVector2(2f),
+            ImGui.GetItemRectMax() + ImGuiHelpers.ScaledVector2(2f),
+            ImGui.ColorConvertFloat4ToU32(ImGuiColors.DalamudWhite),
+            2f, ImDrawFlags.RoundCornersAll, 3f);
 
-        ScaledDummy(5f);
-
-        if (ImGui.Checkbox(Service.Lang.GetText("AutoAdjustScreenBrightness-DisableInCutscene"),
-                           ref ModuleConfig.DisableInCutscene))
-            SaveConfig(ModuleConfig);
-
-        ImGui.BeginGroup();
-        ImGui.SetNextItemWidth(150f * GlobalFontScale);
-        ImGui.SliderInt($"{Service.Lang.GetText("AutoAdjustScreenBrightness-Threshold")} (%)",
-                        ref ModuleConfig.BrightnessThreshold, -10, 100);
-
-        if (ImGui.IsItemDeactivatedAfterEdit())
-            SaveConfig(ModuleConfig);
-
-        ImGui.SetNextItemWidth(150f * GlobalFontScale);
-        ImGui.SliderInt($"{Service.Lang.GetText("AutoAdjustScreenBrightness-ThresholdContent")} (%)",
-                        ref ModuleConfig.BrightnessThresholdContent, -10, 100);
-
-        if (ImGui.IsItemDeactivatedAfterEdit())
-            SaveConfig(ModuleConfig);
-
-        ImGui.EndGroup();
-
-        ImGuiOm.TooltipHover(Service.Lang.GetText("AutoAdjustScreenBrightness-ThresholdHelp"));
-
-        ImGui.SetNextItemWidth(150f * GlobalFontScale);
-        ImGui.SliderInt($"{Service.Lang.GetText("AutoAdjustScreenBrightness-AdjustSpeed")} (%)",
-                        ref ModuleConfig.AdjustSpeed, 1, 200);
-
-        if (ImGui.IsItemDeactivatedAfterEdit())
-            SaveConfig(ModuleConfig);
-
-        ImGuiOm.TooltipHover(Service.Lang.GetText("AutoAdjustScreenBrightness-AdjustSpeedHelp"));
-
-        ImGui.SetNextItemWidth(150f * GlobalFontScale);
-        ImGui.SliderInt($"{Service.Lang.GetText("AutoAdjustScreenBrightness-BrightnessMin")} (%)",
-                        ref ModuleConfig.BrightnessMin, -10, 110);
-
-        if (ImGui.IsItemDeactivatedAfterEdit())
-            SaveConfig(ModuleConfig);
-
-        ImGuiOm.TooltipHover(Service.Lang.GetText("AutoAdjustScreenBrightness-BrightnessMinHelp"));
-
-        ImGui.SetNextItemWidth(150f * GlobalFontScale);
-        ImGui.SliderInt($"{Service.Lang.GetText("AutoAdjustScreenBrightness-BrightnessOriginal")} (%)",
-                        ref OriginalBrightness, -10, 110);
-
-        ImGuiOm.TooltipHover(Service.Lang.GetText("AutoAdjustScreenBrightness-BrightnessOriginalHelp"));
+        ImGuiHelpers.ScaledDummy(5f);
     }
 
-    public static void BrightnessMonitor(CancellationToken token)
+    private void ConfigureSettings()
     {
-        // 缓冲区间
+        if (ImGui.Checkbox(Service.Lang.GetText("AutoAdjustScreenBrightness-DisableInCutscene"),
+                           ref moduleConfig.DisableInCutscene))
+            SaveConfig(moduleConfig);
+
+        ConfigureSlider("AutoAdjustScreenBrightness-Threshold", ref moduleConfig.BrightnessThreshold, -10, 100);
+        ConfigureSlider("AutoAdjustScreenBrightness-ThresholdContent", ref moduleConfig.BrightnessThresholdContent, -10,
+                        100);
+
+        ConfigureSlider("AutoAdjustScreenBrightness-AdjustSpeed", ref moduleConfig.AdjustSpeed, 1, 200);
+        ConfigureSlider("AutoAdjustScreenBrightness-BrightnessMin", ref moduleConfig.BrightnessMin, -10, 110);
+        ConfigureSlider("AutoAdjustScreenBrightness-BrightnessOriginal", ref originalBrightness, -10, 110);
+    }
+
+    private void ConfigureSlider(string label, ref int value, int min, int max)
+    {
+        ImGui.SetNextItemWidth(150f * ImGuiHelpers.GlobalScale);
+        if (ImGui.SliderInt($"{Service.Lang.GetText(label)} (%)", ref value, min, max) &&
+            ImGui.IsItemDeactivatedAfterEdit())
+            SaveConfig(moduleConfig);
+
+        ImGuiOm.TooltipHover(Service.Lang.GetText($"{label}Help"));
+    }
+
+    private static async Task MonitorBrightnessAsync(CancellationToken token)
+    {
         const int hysteresis = 5;
-        // 步幅
-        var stepSize = ModuleConfig.AdjustSpeed == 0 ? 1 : (ModuleConfig.AdjustSpeed / 10) + 1;
-        // 是否已恢复原始亮度
+        var stepSize = Math.Max(1, (moduleConfig.AdjustSpeed / 10) + 1);
+        var currentBrightness = originalBrightness;
+        var targetBrightness = originalBrightness;
+        var lastSignificantBrightness = originalBrightness;
         var haveRestored = false;
 
-        var currentBrightness = OriginalBrightness;
-        var targetBrightness = OriginalBrightness;
-        var lastSignificantBrightness = OriginalBrightness;
-
-        Task.Run(async () =>
+        while (!token.IsCancellationRequested)
         {
-            while (true)
+            if (ShouldSkipAdjustment())
             {
-                if ((ModuleConfig.DisableInCutscene && Flags.WatchingCutscene) || !ApplicationIsActivated())
-                {
-                    await Task.Delay(100, token);
-                    continue;
-                }
-
-                using var bitmap = CaptureScreen();
-                if (token.IsCancellationRequested)
-                    return;
-
-                ScreenBrightness = Screen.GetCurrentBrightness();
-                SceneBrightness = CalculateBrightPixelsPercentage(bitmap);
-
-                // 防抖动
-                if (Math.Abs(SceneBrightness - lastSignificantBrightness) > hysteresis)
-                {
-                    targetBrightness =
-                        SceneBrightness > (Flags.BoundByDuty
-                                               ? ModuleConfig.BrightnessThresholdContent
-                                               : ModuleConfig.BrightnessThreshold)
-                            ? ModuleConfig.BrightnessMin
-                            : OriginalBrightness;
-
-                    lastSignificantBrightness = (int)SceneBrightness;
-                }
-
                 await Task.Delay(100, token);
+                continue;
             }
-        }, token);
 
-        Task.Run(async () =>
-        {
-            while (true)
+            using var bitmap = CaptureScreen();
+            currentScreenBrightness = screenHelper.GetCurrentBrightness();
+            currentSceneBrightness = CalculateBrightPixelsPercentage(bitmap);
+
+            if (Math.Abs(currentSceneBrightness - lastSignificantBrightness) > hysteresis)
             {
-                if (ModuleConfig.DisableInCutscene && Flags.WatchingCutscene)
-                {
-                    await Task.Delay(100, token);
-                    continue;
-                }
+                targetBrightness = currentSceneBrightness > GetBrightnessThreshold()
+                                       ? moduleConfig.BrightnessMin
+                                       : originalBrightness;
 
-                if ((ModuleConfig.DisableInCutscene && Flags.WatchingCutscene) || !ApplicationIsActivated())
-                {
-                    if (!haveRestored)
-                    {
-                        targetBrightness = OriginalBrightness;
-                        Screen.SetBrightness(targetBrightness);
-                        haveRestored = true;
-                    }
-
-                    await Task.Delay(500, token);
-                    continue;
-                }
-
-                if (haveRestored)
-                {
-                    Screen.SetBrightness(targetBrightness);
-                    haveRestored = false;
-                }
-
-                if (currentBrightness != targetBrightness)
-                {
-                    var brightnessAdjustment = targetBrightness > currentBrightness ? stepSize : -stepSize;
-                    currentBrightness = Math.Max(0, Math.Min(255, currentBrightness + brightnessAdjustment));
-                    Screen.SetBrightness(currentBrightness);
-                }
-
-                await Task.Delay(100, token);
+                lastSignificantBrightness = (int)currentSceneBrightness;
             }
-        }, token);
+
+            if (ShouldRestoreBrightness(ref haveRestored))
+            {
+                targetBrightness = originalBrightness;
+                screenHelper.SetBrightness(targetBrightness);
+                haveRestored = true;
+            }
+            else if (haveRestored)
+            {
+                screenHelper.SetBrightness(targetBrightness);
+                haveRestored = false;
+            }
+
+            if (currentBrightness != targetBrightness)
+            {
+                currentBrightness = AdjustBrightness(currentBrightness, targetBrightness, stepSize);
+                screenHelper.SetBrightness(currentBrightness);
+            }
+
+            await Task.Delay(100, token);
+        }
     }
 
-    public static Bitmap CaptureScreen()
-    {
-        var bounds = System.Windows.Forms.Screen.GetBounds(Point.Empty);
-        var bitmap = new Bitmap(bounds.Width, bounds.Height);
+    private static bool ShouldSkipAdjustment() =>
+        (moduleConfig.DisableInCutscene && Flags.WatchingCutscene) || !ApplicationIsActivated();
 
+    private static int GetBrightnessThreshold() =>
+        Flags.BoundByDuty ? moduleConfig.BrightnessThresholdContent : moduleConfig.BrightnessThreshold;
+
+    private static bool ShouldRestoreBrightness(ref bool haveRestored) =>
+        (moduleConfig.DisableInCutscene && Flags.WatchingCutscene) || (!ApplicationIsActivated() && !haveRestored);
+
+    private static int AdjustBrightness(int current, int target, int step) =>
+        Math.Clamp(current + (target > current ? step : -step), 0, 255);
+
+    private static Bitmap CaptureScreen()
+    {
+        var bounds = Screen.GetBounds(Point.Empty);
+        var bitmap = new Bitmap(bounds.Width, bounds.Height);
         using var graphics = Graphics.FromImage(bitmap);
         graphics.CopyFromScreen(Point.Empty, Point.Empty, bounds.Size);
-
         return bitmap;
     }
 
-    public static double CalculateBrightPixelsPercentage(Bitmap bitmap)
+    private static double CalculateBrightPixelsPercentage(Bitmap bitmap)
     {
         var marginWidth = bitmap.Width / 4;
         var marginHeight = bitmap.Height / 4;
@@ -218,8 +172,9 @@ public class AutoAdjustScreenBrightness : DailyModuleBase
         Marshal.Copy(bitmapData.Scan0, pixels, 0, byteCount);
         bitmap.UnlockBits(bitmapData);
 
-        var brightPixels = 0D;
+        double brightPixels = 0;
         var totalPixels = centerWidth * centerHeight;
+
         for (var y = 0; y < centerHeight; y++)
         {
             var currentLine = y * bitmapData.Stride;
@@ -232,74 +187,58 @@ public class AutoAdjustScreenBrightness : DailyModuleBase
 
                 var perceivedBrightness = ((0.299 * red) + (0.587 * green) + (0.114 * blue)) / 255.0;
 
-                // 接近白色的像素标记为刺眼
                 if (perceivedBrightness > 0.8)
-                {
-                    perceivedBrightness = 1.0;
-                    brightPixels += 0.5;
-                }
-
-                if (perceivedBrightness > 0.75)
+                    brightPixels += 1.5;
+                else if (perceivedBrightness > 0.75)
                     brightPixels++;
             }
         }
 
-        brightPixels = Math.Min(totalPixels, brightPixels);
-
-        return brightPixels / totalPixels * 100;
+        return Math.Min(brightPixels, totalPixels) / totalPixels * 100;
     }
 
     public override void Uninit()
     {
         base.Uninit();
+        cancelTokenSource.Cancel();
+        screenHelper.SetBrightness(originalBrightness);
+    }
 
-        CancellationTokenSource?.Cancel();
-        CancellationTokenSource?.Dispose();
-        CancellationTokenSource = null;
-
-        Screen.SetBrightness(OriginalBrightness);
+    public void Dispose()
+    {
+        cancelTokenSource.Dispose();
+        screenHelper.Dispose();
     }
 
     private class Config : ModuleConfiguration
     {
         public int AdjustSpeed = 50;
-
         public int BrightnessMin = 30;
-
-        // 百分比
         public int BrightnessThreshold = 55;
         public int BrightnessThresholdContent = 65;
         public bool DisableInCutscene = true;
     }
 
-    private class ScreenHelper
+    private class ScreenHelper : IDisposable
     {
-        private readonly SelectQuery queryBrightness = new("WmiMonitorBrightness");
-        private readonly SelectQuery queryMethods = new("WmiMonitorBrightnessMethods");
-        private readonly ManagementScope scope = new("root\\WMI");
-        private readonly ManagementObjectSearcher searcherBrightness;
-        private readonly ManagementObjectSearcher searcherMethods;
-        private readonly byte[] validBrightnessLevels;
+        private readonly ManagementScope _scope = new("root\\WMI");
+        private readonly ManagementObjectSearcher _searcherBrightness;
+        private readonly ManagementObjectSearcher _searcherMethods;
+        private readonly byte[] _validBrightnessLevels;
 
         public ScreenHelper()
         {
-            searcherBrightness = new ManagementObjectSearcher(scope, queryBrightness);
-            searcherMethods = new ManagementObjectSearcher(scope, queryMethods);
-            validBrightnessLevels = GetBrightnessLevels();
-            IsSupported = validBrightnessLevels.Length > 0;
+            _searcherBrightness = new ManagementObjectSearcher(_scope, new SelectQuery("WmiMonitorBrightness"));
+            _searcherMethods = new ManagementObjectSearcher(_scope, new SelectQuery("WmiMonitorBrightnessMethods"));
+            _validBrightnessLevels = GetBrightnessLevels();
+            IsSupported = _validBrightnessLevels.Length > 0;
         }
 
-        public bool IsSupported { get; private set; }
-
-        public void AdjustBrightness(int change)
-        {
-            if (IsSupported)
-                SetupBrightness(GetCurrentBrightness() + change);
-        }
+        public bool IsSupported { get; }
 
         public int GetCurrentBrightness()
         {
-            foreach (var o in searcherBrightness.Get())
+            foreach (var o in _searcherBrightness.Get())
             {
                 var obj = (ManagementObject)o;
                 return (byte)obj.GetPropertyValue("CurrentBrightness");
@@ -308,23 +247,21 @@ public class AutoAdjustScreenBrightness : DailyModuleBase
             return 0;
         }
 
-        private void SetupBrightness(int targetPercent)
+        public void SetBrightness(int brightness)
         {
-            targetPercent = Math.Clamp(targetPercent, 0, 100);
-            var nearestValidBrightness = validBrightnessLevels.FirstOrDefault(level => level >= targetPercent);
+            if (!IsSupported) return;
+
+            var targetBrightness = (byte)Math.Clamp(brightness, 0, 100);
+            var nearestValidBrightness = _validBrightnessLevels.FirstOrDefault(level => level >= targetBrightness);
+
             if (nearestValidBrightness > 0)
-                SetBrightness(nearestValidBrightness);
-        }
-
-        public void SetBrightness(int brightness) => SetBrightness((byte)brightness);
-
-        public void SetBrightness(byte brightness)
-        {
-            foreach (var o in searcherMethods.Get())
             {
-                var obj = (ManagementObject?)o;
-                obj?.InvokeMethod("WmiSetBrightness", [uint.MaxValue, brightness]);
-                break;
+                foreach (var o in _searcherMethods.Get())
+                {
+                    var obj = (ManagementObject?)o;
+                    obj?.InvokeMethod("WmiSetBrightness", new object[] { uint.MaxValue, nearestValidBrightness });
+                    break;
+                }
             }
         }
 
@@ -332,7 +269,7 @@ public class AutoAdjustScreenBrightness : DailyModuleBase
         {
             try
             {
-                foreach (var o in searcherBrightness.Get())
+                foreach (var o in _searcherBrightness.Get())
                 {
                     var obj = (ManagementObject)o;
                     return (byte[])obj.GetPropertyValue("Level");
@@ -344,6 +281,12 @@ public class AutoAdjustScreenBrightness : DailyModuleBase
             }
 
             return [];
+        }
+
+        public void Dispose()
+        {
+            _searcherBrightness.Dispose();
+            _searcherMethods.Dispose();
         }
     }
 }

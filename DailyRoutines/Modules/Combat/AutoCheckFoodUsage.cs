@@ -8,12 +8,10 @@ using DailyRoutines.Managers;
 using Dalamud.Hooking;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 
@@ -201,8 +199,10 @@ public class AutoCheckFoodUsage : DailyModuleBase
                                                               ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.DontClosePopups))
                                          {
                                              if (!zones.Remove(x.RowId))
+                                             {
                                                  zones.Add(x.RowId);
-                                             SaveConfig(ModuleConfig);
+                                                 SaveConfig(ModuleConfig);
+                                             }
                                          }
                                      }, 
                                      x => () =>
@@ -236,12 +236,11 @@ public class AutoCheckFoodUsage : DailyModuleBase
 
     private unsafe bool? EnqueueFoodRefresh(int zone = -1)
     {
-        if (Throttler.Throttle("AutoCheckFoodUsage_EnqueueFoodRefresh", 1000)) return false;
+        if (!Throttler.Throttle("AutoCheckFoodUsage_EnqueueFoodRefresh", 1000)) return false;
 
         var actionManager = ActionManager.Instance();
-        if (Flags.BetweenAreas || Service.ClientState.LocalPlayer == null ||
-               (TryGetAddonByName<AtkUnitBase>("FadeMiddle", out var addon) && addon->IsVisible) ||
-               actionManager->GetActionStatus(ActionType.Item, 4650) != 0)
+        if (Flags.BetweenAreas || Service.ClientState.LocalPlayer == null || 
+            !IsScreenReady() || actionManager->GetActionStatus(ActionType.Item, 4650) != 0)
             return false;
 
         if (zone == -1)
@@ -250,7 +249,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
         var instance = InventoryManager.Instance();
         var validPresets = ModuleConfig.Presets
                                        .Where(x => x.Enabled && 
-                                                   (x.Zones.Count == 0 || x.Zones.Contains((uint)zone)) &&
+                                                   (zone == -1 || x.Zones.Count == 0 || x.Zones.Contains((uint)zone)) &&
                                                    (x.ClassJobs.Count == 0 || 
                                                     x.ClassJobs.Contains(Service.ClientState.LocalPlayer.ClassJob.Id)) &&
                                                    instance->GetInventoryItemCount(x.ItemID, x.IsHQ) > 0)
@@ -262,6 +261,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
             TaskHelper.Abort();
             return true;
         }
+
         TryGetWellFedParam(out var itemFood, out var remainingTime);
         var existedStatus = validPresets.FirstOrDefault(x => ToFoodRowID(x.ItemID) == itemFood);
 
@@ -308,7 +308,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
     private nint CountdownInitDetour(nint a1, nint a2)
     {
         var original = CountdownInitHook.Original(a1, a2);
-
+        Service.Log.Debug("测试倒计时");
         if (ModuleConfig.EnabledCheckpoints[FoodCheckpoint.倒计时开始时])
             TaskHelper.Enqueue(() => EnqueueFoodRefresh());
 
@@ -367,7 +367,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
     private class Config : ModuleConfiguration
     {
         public List<FoodUsagePreset> Presets = [];
-
+        
         public Dictionary<FoodCheckpoint, bool> EnabledCheckpoints = [];
         public int RefreshThreshold = 600; // 秒
         public bool SendNotice = true;

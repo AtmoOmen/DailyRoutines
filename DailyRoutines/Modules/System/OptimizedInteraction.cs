@@ -1,14 +1,17 @@
+using System.Threading.Tasks;
+using DailyRoutines.Helpers;
 using DailyRoutines.Managers;
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using Lumina.Excel.GeneratedSheets;
 
 namespace DailyRoutines.Modules;
 
 [ModuleDescription("OptimizedInteractionTitle", "OptimizedInteractionDescription", ModuleCategories.系统)]
-public unsafe class OptimizedInteraction : DailyModuleBase
+public class OptimizedInteraction : DailyModuleBase
 {
     // 当前位置无法进行该操作
     private delegate bool CameraObjectBlockedDelegate(nint a1, nint a2, nint a3);
@@ -17,7 +20,7 @@ public unsafe class OptimizedInteraction : DailyModuleBase
     private static Hook<CameraObjectBlockedDelegate>? CameraObjectBlockedHook;
 
     // 目标处于视野之外
-    private delegate bool IsObjectInViewRangeDelegate(TargetSystem* system, GameObject* gameObject);
+    private unsafe delegate bool IsObjectInViewRangeDelegate(TargetSystem* system, GameObject* gameObject);
     [Signature(
         "E8 ?? ?? ?? ?? 84 C0 75 ?? 48 8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B C8 48 8B 10 FF 52 ?? 48 8B C8 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? E9",
         DetourName = nameof(IsObjectInViewRangeHookDetour))]
@@ -49,12 +52,12 @@ public unsafe class OptimizedInteraction : DailyModuleBase
     private static Hook<CheckTargetPositionDelegate>? CheckTargetPositionHook;
 
     // 剧情被中断
-    private delegate bool EventCanceledDelegate(EventFramework* framework);
+    private unsafe delegate bool EventCanceledDelegate(EventFramework* framework);
     [Signature("E8 ?? ?? ?? ?? 84 C0 74 ?? 48 8B CB E8 ?? ?? ?? ?? 48 3B C7", DetourName = nameof(EventCanceledDetour))]
     private static Hook<EventCanceledDelegate>? EventCanceledHook;
 
     // 检查目标距离
-    private delegate float CheckTargetDistanceDelegate(GameObject* localPlayer, GameObject* target);
+    private unsafe delegate float CheckTargetDistanceDelegate(GameObject* localPlayer, GameObject* target);
     [Signature("E8 ?? ?? ?? ?? 0F 2F 05 ?? ?? ?? ?? 76 ?? 48 8B 03 48 8B CB FF 50 ?? 48 8B C8 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? EB", 
                DetourName = nameof(CheckTargetDistanceDetour))]
     private static Hook<CheckTargetDistanceDelegate>? CheckTargetDistanceHook;
@@ -62,20 +65,53 @@ public unsafe class OptimizedInteraction : DailyModuleBase
     public override void Init()
     {
         Service.Hook.InitializeFromAttributes(this);
-        CameraObjectBlockedHook.Enable();
-        IsObjectInViewRangeHook.Enable();
-        InteractCheck0Hook.Enable();
-        IsPlayerOnJumping0Hook.Enable();
-        IsPlayerOnJumping1Hook.Enable();
-        IsPlayerOnJumping2Hook.Enable();
-        CheckTargetPositionHook.Enable();
-        EventCanceledHook.Enable();
-        CheckTargetDistanceHook.Enable();
+        SwitchHooks(true);
+
+        Service.ClientState.TerritoryChanged += OnZoneChanged;
+        Task.Run(async () =>
+        {
+            await Service.Framework.RunOnFrameworkThread(() => Service.ClientState.TerritoryType != 0);
+            OnZoneChanged(Service.ClientState.TerritoryType);
+        });
+    }
+
+    private static void OnZoneChanged(ushort zone)
+    {
+        var zoneData = LuminaCache.GetRow<TerritoryType>(zone);
+        SwitchHooks(!zoneData.IsPvpZone);
+    }
+
+    private static void SwitchHooks(bool isEnable)
+    {
+        if (isEnable)
+        {
+            CameraObjectBlockedHook.Enable();
+            IsObjectInViewRangeHook.Enable();
+            InteractCheck0Hook.Enable();
+            IsPlayerOnJumping0Hook.Enable();
+            IsPlayerOnJumping1Hook.Enable();
+            IsPlayerOnJumping2Hook.Enable();
+            CheckTargetPositionHook.Enable();
+            EventCanceledHook.Enable();
+            CheckTargetDistanceHook.Enable();
+        }
+        else
+        {
+            CameraObjectBlockedHook.Disable();
+            IsObjectInViewRangeHook.Disable();
+            InteractCheck0Hook.Disable();
+            IsPlayerOnJumping0Hook.Disable();
+            IsPlayerOnJumping1Hook.Disable();
+            IsPlayerOnJumping2Hook.Disable();
+            CheckTargetPositionHook.Disable();
+            EventCanceledHook.Disable();
+            CheckTargetDistanceHook.Disable();
+        }
     }
 
     private static bool CameraObjectBlockedDetour(nint a1, nint a2, nint a3) => true;
 
-    private static bool IsObjectInViewRangeHookDetour(TargetSystem* system, GameObject* gameObject) => true;
+    private static unsafe bool IsObjectInViewRangeHookDetour(TargetSystem* system, GameObject* gameObject) => true;
 
     private static bool InteractCheck0Detour(nint a1, nint a2, nint a3, nint a4, bool a5) => true;
 
@@ -83,7 +119,7 @@ public unsafe class OptimizedInteraction : DailyModuleBase
 
     private static bool CheckTargetPositionDetour(nint a1, nint a2, nint a3, byte a4, byte a5) => true;
 
-    private static bool EventCanceledDetour(EventFramework* framework) => false;
+    private static unsafe bool EventCanceledDetour(EventFramework* framework) => false;
 
-    private static float CheckTargetDistanceDetour(GameObject* localPlayer, GameObject* target) => 0f;
+    private static unsafe float CheckTargetDistanceDetour(GameObject* localPlayer, GameObject* target) => 0f;
 }
