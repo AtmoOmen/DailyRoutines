@@ -30,7 +30,7 @@ public unsafe class AutoGardensWork : DailyModuleBase
 {
     private delegate GameObject* GetGameObjectFromObjectIDDelegate(ulong objectID);
 
-    [Signature("E8 ?? ?? ?? ?? 44 0F B6 C3 48 8B D0")]
+    [Signature("40 53 48 83 EC ?? B8 ?? ?? ?? ?? 0F B6 DA")]
     private static GetGameObjectFromObjectIDDelegate? GetGameObjectFromObjectID;
 
     private static readonly InventoryType[] InventoryTypes =

@@ -223,7 +223,7 @@ public class Main : Window, IDisposable
         using (ImRaii.Group())
         {
             ImGuiHelpers.CenterCursorFor(72f * GlobalFontScale);
-            ImGui.Image(PresetData.Icon.ImGuiHandle, ScaledVector2(72f));
+            //ImGui.Image(PresetData.Icon.ImGuiHandle, ScaledVector2(72f));
 
             using (FontManager.UIFont140.Push())
             {

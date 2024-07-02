@@ -9,19 +9,18 @@ namespace DailyRoutines.Modules;
                    ModuleCategories.界面优化)]
 public unsafe class AutoUnlockAllOrchestrionsListen : DailyModuleBase
 {
-    [Signature(
-        "40 53 48 83 EC ?? 4C 8B 81 ?? ?? ?? ?? 48 B8 ?? ?? ?? ?? ?? ?? ?? ?? 4C 2B 81 ?? ?? ?? ?? 48 8B D9 44 8B CA 49 F7 E8 49 03 D0 48 C1 FA ?? 48 8B C2 48 C1 E8 ?? 48 03 D0 44 3B CA 0F 83 ?? ?? ?? ?? 49 6B C9",
-        DetourName = nameof(PlayMusicHotelPreCheckDetour))]
+    [Signature("E8 ?? ?? ?? ?? 32 C0 48 83 C4 ?? 5B C3 48 8B CB E8 ?? ?? ?? ?? 32 C0 48 83 C4 ?? 5B C3 CC CC CC CC CC CC CC CC CC CC CC",
+               DetourName = nameof(PlayMusicHotelPreCheckDetour))]
     private static Hook<PlayMusicPreCheckDelegate>? PlayMusicHotelPreCheckHook;
 
-    [Signature(
-        "E8 ?? ?? ?? ?? 32 C0 48 83 C4 ?? 5B C3 CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC 48 89 5C 24",
-        DetourName = nameof(PlayMusicHomePreCheckDetour))]
-    private static Hook<PlayMusicPreCheckDelegate>? PlayMusicHomePreCheckHook;
-
-    [Signature("E8 ?? ?? ?? ?? 32 C0 48 83 C4 ?? 5B C3 48 8B CB E8 ?? ?? ?? ?? 32 C0 48 83 C4 ?? 5B C3 48 8B CB",
-               DetourName = nameof(AddToPlaylistDetour))]
-    private static Hook<PlayMusicPreCheckDelegate>? PlayMusicAddToPlaylistHook;
+    // [Signature(
+    //     "E8 ?? ?? ?? ?? 32 C0 48 83 C4 ?? 5B C3 CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC 48 89 5C 24",
+    //     DetourName = nameof(PlayMusicHomePreCheckDetour))]
+    // private static Hook<PlayMusicPreCheckDelegate>? PlayMusicHomePreCheckHook;
+    //
+    // [Signature("E8 ?? ?? ?? ?? 32 C0 48 83 C4 ?? 5B C3 48 8B CB E8 ?? ?? ?? ?? 32 C0 48 83 C4 ?? 5B C3 48 8B CB",
+    //            DetourName = nameof(AddToPlaylistDetour))]
+    // private static Hook<PlayMusicPreCheckDelegate>? PlayMusicAddToPlaylistHook;
 
     [Signature("40 57 48 83 EC ?? 0F B7 F9 B9")]
     private static PlayMusicDelegate? PlayMusic;
@@ -31,8 +30,8 @@ public unsafe class AutoUnlockAllOrchestrionsListen : DailyModuleBase
     {
         Service.Hook.InitializeFromAttributes(this);
         PlayMusicHotelPreCheckHook?.Enable();
-        PlayMusicHomePreCheckHook?.Enable();
-        PlayMusicAddToPlaylistHook.Enable();
+        // PlayMusicHomePreCheckHook?.Enable();
+        // PlayMusicAddToPlaylistHook.Enable();
     }
 
     private static nint PlayMusicHotelPreCheckDetour(nint a1, uint pageIndex)
@@ -53,13 +52,13 @@ public unsafe class AutoUnlockAllOrchestrionsListen : DailyModuleBase
         return 0;
     }
 
-    private static nint AddToPlaylistDetour(nint a1, uint pageIndex)
-    {
-        UnlockAndParseOrchestions(a1, pageIndex, out _);
-
-        var original = PlayMusicAddToPlaylistHook.Original(a1, pageIndex);
-        return original;
-    }
+    // private static nint AddToPlaylistDetour(nint a1, uint pageIndex)
+    // {
+    //     UnlockAndParseOrchestions(a1, pageIndex, out _);
+    //
+    //     var original = PlayMusicAddToPlaylistHook.Original(a1, pageIndex);
+    //     return original;
+    // }
 
     private static void UnlockAndParseOrchestions(nint a1, uint pageIndex, out uint musicIndex)
     {

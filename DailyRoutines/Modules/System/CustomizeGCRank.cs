@@ -12,7 +12,7 @@ public unsafe class CustomizeGCRank : DailyModuleBase
 {
     private delegate byte GetGrandCompanyRankDeleagte(PlayerState* instance);
 
-    [Signature("E8 ?? ?? ?? ?? 3C ?? 88 44 24", DetourName = nameof(GetGrandCompanyRankDetour))]
+    [Signature("0F B6 81 ?? ?? ?? ?? FF C8 83 F8 ?? 73", DetourName = nameof(GetGrandCompanyRankDetour))]
     private static Hook<GetGrandCompanyRankDeleagte>? GetGrandCompanyRankHook;
 
     private static byte? OriginalRank;

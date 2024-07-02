@@ -23,7 +23,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
 {
     // 返回值为 GameObject*, 无对象则为 0
     private delegate nint ParseActionCommandArgDelegate(nint a1, nint arg, bool a3, bool a4);
-    [Signature("E8 ?? ?? ?? ?? 4C 8B F8 49 B8", DetourName = nameof(ParseActionCommandArgDetour))]
+    [Signature("E8 ?? ?? ?? ?? 45 33 E4 4C 8B F8 48 85 C0 74 ?? 48 8B 00", DetourName = nameof(ParseActionCommandArgDetour))]
     private static Hook<ParseActionCommandArgDelegate>? ParseActionCommandArgHook;
 
     private static Config ModuleConfig = null!;

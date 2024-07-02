@@ -38,12 +38,10 @@ public class OptimizedInteraction : DailyModuleBase
                DetourName = nameof(IsPlayerOnJumpingDetour))]
     private static Hook<IsPlayerOnJumpingDelegate>? IsPlayerOnJumping0Hook;
 
-    [Signature("E8 ?? ?? ?? ?? 84 C0 0F 85 ?? ?? ?? ?? 48 8D 8D ?? ?? ?? ?? 48 89 9C 24",
-               DetourName = nameof(IsPlayerOnJumpingDetour))]
+    [Signature("48 8B 81 ?? ?? ?? ?? 83 38 ?? 0F 94 C0", DetourName = nameof(IsPlayerOnJumpingDetour))]
     private static Hook<IsPlayerOnJumpingDelegate>? IsPlayerOnJumping1Hook;
 
-    [Signature("E8 ?? ?? ?? ?? 84 C0 74 ?? 48 85 DB 74 ?? 48 8B 03 48 8B CB FF 50",
-               DetourName = nameof(IsPlayerOnJumpingDetour))]
+    [Signature("40 53 48 83 EC ?? 48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 84 C0 75", DetourName = nameof(IsPlayerOnJumpingDetour))]
     private static Hook<IsPlayerOnJumpingDelegate>? IsPlayerOnJumping2Hook;
 
     // 检查目标距离 / 高低

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Windows.Forms;
@@ -21,7 +20,6 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Memory;
-using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -44,15 +42,8 @@ public unsafe class AutoRetainerWork : DailyModuleBase
 
     [Signature(
         "48 89 5C 24 ?? 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 0F B6 82 ?? ?? ?? ?? 48 8B FA 48 8B D9 38 41 19 74 54",
-        DetourName = nameof(InfoProxyItemSearchAddPageDetour))]
+               DetourName = nameof(InfoProxyItemSearchAddPageDetour))]
     private static Hook<InfoProxyItemSearchAddPageDelegate>? InfoProxyItemSearchAddPageHook;
-
-    private delegate nint MarketboardPacketDelegate(nint a1, nint packetData);
-
-    [Signature(
-        "40 53 48 83 EC ?? 48 8B 0D ?? ?? ?? ?? 48 8B DA E8 ?? ?? ?? ?? 48 85 C0 74 ?? 4C 8B 00 48 8B C8 41 FF 90 ?? ?? ?? ?? 48 8B C8 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 85 C0 74 ?? 48 8D 53 ?? 41 B8 ?? ?? ?? ?? 48 8B C8 48 83 C4 ?? 5B E9 ?? ?? ?? ?? 48 83 C4 ?? 5B C3 CC CC CC CC CC CC CC CC CC CC 40 53",
-        DetourName = nameof(MarketboardHistorDetour))]
-    private static Hook<MarketboardPacketDelegate>? MarketboardHistoryHook;
 
     private static Config ModuleConfig = null!;
 
@@ -96,7 +87,7 @@ public unsafe class AutoRetainerWork : DailyModuleBase
         ModuleConfig = LoadConfig<Config>() ?? new();
 
         Service.Hook.InitializeFromAttributes(this);
-        MarketboardHistoryHook?.Enable();
+        Service.MarketBoard.HistoryReceived += OnHistoryReceived;
         InfoProxyItemSearchAddPageHook?.Enable();
 
         TaskHelper ??= new TaskHelper { AbortOnTimeout = true, TimeLimitMS = 60000, ShowDebug = false };
@@ -1693,21 +1684,17 @@ public unsafe class AutoRetainerWork : DailyModuleBase
     #region Hooks
 
     // 历史交易数据获取
-    private nint MarketboardHistorDetour(nint a1, nint packetData)
+    private static void OnHistoryReceived(IMarketBoardHistory history)
     {
-        if (CurrentItem == null)
-            return MarketboardHistoryHook.Original(a1, packetData);
+        if (CurrentItem == null) return;
 
-        var data = MarketBoardHistory.Read(packetData);
-        if (data.CatalogId != CurrentItem.ItemID)
-            return MarketboardHistoryHook.Original(a1, packetData);
+        if (history.ItemId != CurrentItem.ItemID) return;
 
-        ItemHistoryList ??= data.HistoryListings.ToList();
-        return MarketboardHistoryHook.Original(a1, packetData);
+        ItemHistoryList ??= [.. history.HistoryListings];
     }
 
     // 当前市场数据获取
-    private nint InfoProxyItemSearchAddPageDetour(byte* a1, byte* packetData)
+    private static nint InfoProxyItemSearchAddPageDetour(byte* a1, byte* packetData)
     {
         if (CurrentItem == null)
             return InfoProxyItemSearchAddPageHook.Original(a1, packetData);

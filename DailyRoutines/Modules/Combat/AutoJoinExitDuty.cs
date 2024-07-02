@@ -15,7 +15,7 @@ namespace DailyRoutines.Modules;
 [ModuleDescription("AutoJoinExitDutyTitle", "AutoJoinExitDutyDescription", ModuleCategories.战斗)]
 public unsafe class AutoJoinExitDuty : DailyModuleBase
 {
-    [Signature("E8 ?? ?? ?? ?? 48 8B 43 28 B1 01")]
+    [Signature("E8 ?? ?? ?? ?? 48 8B 03 48 8B CB FF 50 ?? C7 43")]
     private static AbandonDutyDelagte? AbandonDuty;
 
     private static AtkUnitBase* ContentsFinder => (AtkUnitBase*)Service.Gui.GetAddonByName("ContentsFinder");

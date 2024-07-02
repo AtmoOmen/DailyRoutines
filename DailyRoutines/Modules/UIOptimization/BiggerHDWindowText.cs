@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Hooking;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
@@ -16,9 +14,8 @@ namespace DailyRoutines.Modules;
 [ModuleDescription("BiggerHDWindowTextTitle", "BiggerHDWindowTextDescription", ModuleCategories.界面优化)]
 public unsafe class BiggerHDWindowText : DailyModuleBase
 {
-    [Signature(
-        "40 55 53 56 57 41 56 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 85 ?? ?? ?? ?? 48 8B 9D",
-        DetourName = nameof(TextInputReceiveEventDetour))]
+    [Signature("40 55 53 57 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 85 ?? ?? ?? ?? 48 8B 9D",
+               DetourName = nameof(TextInputReceiveEventDetour))]
     private static Hook<TextInputReceiveEventDelegate>? TextInputReceiveEventHook;
 
     private static readonly Dictionary<string, TextNodeInfo> TextWindows = new()

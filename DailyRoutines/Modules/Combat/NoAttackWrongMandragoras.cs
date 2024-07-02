@@ -17,8 +17,7 @@ namespace DailyRoutines.Modules;
                    ModuleCategories.战斗)]
 public unsafe class NoAttackWrongMandragoras : DailyModuleBase
 {
-    [Signature("40 53 48 83 EC 20 F3 0F 10 89 ?? ?? ?? ?? 0F 57 C0 0F 2E C8 48 8B D9 7A 0A",
-               DetourName = nameof(IsTargetableDetour))]
+    [Signature("0F B6 91 ?? ?? ?? ?? F6 C2 ?? 74 ?? F6 C2 ?? 74", DetourName = nameof(IsTargetableDetour))]
     private static Hook<IsTargetableDelegate>? IsTargetableHook;
 
     private static List<uint[]>? Mandragoras;

@@ -15,7 +15,7 @@ public class AutoDismount : DailyModuleBase
 {
     private static HashSet<uint>? TargetSelfOrAreaActions;
 
-    [Signature("E8 ?? ?? ?? ?? 44 0F B6 C3 48 8B D0")]
+    [Signature("40 53 48 83 EC ?? B8 ?? ?? ?? ?? 0F B6 DA")]
     private static unsafe delegate* unmanaged<ulong, GameObject*> GetGameObjectFromObjectID;
 
     public override void Init()

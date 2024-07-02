@@ -23,8 +23,7 @@ public unsafe class InstantLogout : DailyModuleBase
     private static SendLogoutDelegate? SendLogout;
 
     private delegate nint SystemMenuExecuteDelegate(AgentHUD* agentHud, int a2, uint a3, int a4, nint a5);
-    [Signature("48 89 5C 24 ?? 55 57 41 55 41 56 41 57 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 ?? 80 B9",
-               DetourName = nameof(SystemMenuExecuteDetour))]
+    [Signature("E8 ?? ?? ?? ?? 48 8B 07 48 8B CF 89 5F ?? FF 50 ?? 84 C0", DetourName = nameof(SystemMenuExecuteDetour))]
     private static Hook<SystemMenuExecuteDelegate>? SystemMenuExecuteHook;
 
     private delegate byte ProcessSendedChatDelegate(nint uiModule, byte** message, nint a3);

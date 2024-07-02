@@ -4,6 +4,7 @@ using ClickLib;
 using DailyRoutines.Helpers;
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Objects;
+using Dalamud.Interface;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
@@ -42,6 +43,7 @@ public class Service
     {
         PluginInterface = pluginInterface;
         PluginInterface.UiBuilder.DisableCutsceneUiHide = true;
+        UiBuilder = pluginInterface.UiBuilder;
     }
 
     internal static void Uninit()
@@ -75,8 +77,8 @@ public class Service
     /// <summary>
     ///     如非必要请使用 CommandManager, 而不是 ICommandManager 来添加命令
     /// </summary>
-    [PluginService] public static ICommandManager Command { get; set; } = null!;
-    [PluginService] public static ICondition Condition { get; private set; } = null!;
+    [PluginService] public static ICommandManager Command { get;  set; } = null!;
+    [PluginService] public static ICondition   Condition   { get; private set; } = null!;
     [PluginService] public static IContextMenu ContextMenu { get; private set; } = null!;
     /// <summary>
     ///     如非必要请使用 LuminaCache, 而不是 IDataManager 来获取游戏表格数据
@@ -89,42 +91,44 @@ public class Service
     /// <summary>
     ///     如果需要挂钩 Update 事件, 请使用 FrameworkManager
     /// </summary>
-    [PluginService] public static IFramework Framework { get; private set; } = null!;
-    [PluginService] public static IGameConfig GameConfig { get; private set; } = null!;
-    [PluginService] public static IGameGui Gui { get; private set; } = null!;
-    [PluginService] public static IGameInteropProvider Hook { get; private set; } = null!;
-    [PluginService] public static IGameInventory Inventory { get; private set; } = null!;
-    [PluginService] public static IGameLifecycle Lifecycle { get; private set; } = null!;
-    [PluginService] public static IGameNetwork Network { get; private set; } = null!;
-    [PluginService] public static IGamepadState Gamepad { get; private set; } = null!;
-    [PluginService] public static IJobGauges JobGauges { get; private set; } = null!;
-    [PluginService] public static IKeyState KeyState { get; private set; } = null!;
-    [PluginService] public static INotificationManager DalamudNotice { get; private set; } = null!;
-    [PluginService] public static IObjectTable ObjectTable { get; private set; } = null!;
-    [PluginService] public static IPartyFinderGui PartyFinder { get; private set; } = null!;
-    [PluginService] public static IPartyList PartyList { get; private set; } = null!;
-    [PluginService] public static IPluginLog Log { get; private set; } = null!;
-    [PluginService] public static ITargetManager Target { get; private set; } = null!;
-    [PluginService] public static ITextureProvider Texture { get; private set; } = null!;
-    [PluginService] public static ITitleScreenMenu TitleScreenMenu { get; private set; } = null!;
-    [PluginService] public static IToastGui Toast { get; private set; } = null!;
+    [PluginService] public static IFramework           Framework       { get; private set; } = null!;
+    [PluginService] public static IGameConfig          GameConfig      { get; private set; } = null!;
+    [PluginService] public static IGameGui             Gui             { get; private set; } = null!;
+    [PluginService] public static IGameInteropProvider Hook            { get; private set; } = null!;
+    [PluginService] public static IGameInventory       Inventory       { get; private set; } = null!;
+    [PluginService] public static IGameLifecycle       Lifecycle       { get; private set; } = null!;
+    [PluginService] public static IGameNetwork         Network         { get; private set; } = null!;
+    [PluginService] public static IGamepadState        Gamepad         { get; private set; } = null!;
+    [PluginService] public static IJobGauges           JobGauges       { get; private set; } = null!;
+    [PluginService] public static IKeyState            KeyState        { get; private set; } = null!;
+    [PluginService] public static IMarketBoard         MarketBoard     { get; private set; } = null!;
+    [PluginService] public static INotificationManager DalamudNotice   { get; private set; } = null!;
+    [PluginService] public static IObjectTable         ObjectTable     { get; private set; } = null!;
+    [PluginService] public static IPartyFinderGui      PartyFinder     { get; private set; } = null!;
+    [PluginService] public static IPartyList           PartyList       { get; private set; } = null!;
+    [PluginService] public static IPluginLog           Log             { get; private set; } = null!;
+    [PluginService] public static ITargetManager       Target          { get; private set; } = null!;
+    [PluginService] public static ITextureProvider     Texture         { get; private set; } = null!;
+    [PluginService] public static ITitleScreenMenu     TitleScreenMenu { get; private set; } = null!;
+    [PluginService] public static IToastGui            Toast           { get; private set; } = null!;
 
     #endregion
 
+    public static IUiBuilder              UiBuilder             { get; private set; } = null!;
     public static IDalamudPluginInterface PluginInterface       { get; private set; } = null!;
-    public static Configuration          Config                { get; private set; } = null!;
-    public static FontManager            FontManager           { get; private set; } = new();
-    public static LanguageManager        Lang                  { get; private set; } = new();
-    public static WindowManager          WindowManager         { get; private set; } = new();
-    public static UseActionManager       UseActionManager      { get; private set; } = new();
-    public static CommandManager         CommandManager        { get; private set; } = new();
-    public static ExecuteCommandManager  ExecuteCommandManager { get; private set; } = new();
-    public static LogMessageManager      LogMessageManager     { get; private set; } = new();
-    public static FrameworkManager       FrameworkManager      { get; private set; } = new();
-    public static NotifyManager          Notify                { get; private set; } = new();
-    public static SigScanner             SigScanner            { get; private set; } = new();
-    public static IPCManager             IPCManager            { get; private set; } = new();
-    public static LinkPayloadManager     LinkPayloadManager    { get; private set; } = new();
-    public static ModuleManager          ModuleManager         { get; private set; } = new();
-    public static OnlineStatsManager     DataUploadManager     { get; private set; } = new();
+    public static Configuration           Config                { get; private set; } = null!;
+    public static FontManager             FontManager           { get; private set; } = new();
+    public static LanguageManager         Lang                  { get; private set; } = new();
+    public static WindowManager           WindowManager         { get; private set; } = new();
+    public static UseActionManager        UseActionManager      { get; private set; } = new();
+    public static CommandManager          CommandManager        { get; private set; } = new();
+    public static ExecuteCommandManager   ExecuteCommandManager { get; private set; } = new();
+    public static LogMessageManager       LogMessageManager     { get; private set; } = new();
+    public static FrameworkManager        FrameworkManager      { get; private set; } = new();
+    public static NotifyManager           Notify                { get; private set; } = new();
+    public static SigScanner              SigScanner            { get; private set; } = new();
+    public static IPCManager              IPCManager            { get; private set; } = new();
+    public static LinkPayloadManager      LinkPayloadManager    { get; private set; } = new();
+    public static ModuleManager           ModuleManager         { get; private set; } = new();
+    public static OnlineStatsManager      DataUploadManager     { get; private set; } = new();
 }

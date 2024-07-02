@@ -22,7 +22,7 @@ public class AutoCutSceneSkip : DailyModuleBase
     private static Hook<CutsceneHandleInputDelegate>? CutsceneHandleInputHook;
 
     private delegate nint GetCutSceneRowDelegate(uint row);
-    [Signature("E8 ?? ?? ?? ?? 48 85 C0 0F 84 ?? ?? ?? ?? F6 40 ?? ?? 75 ?? BA", DetourName = nameof(GetCutSceneRowDetour))]
+    [Signature("E8 ?? ?? ?? ?? 48 85 C0 74 ?? 0F B7 00 66 85 C0 74 ?? 44 8B C0 83 E0 ?? 3D ?? ?? ?? ?? 73 ?? 41 8B C0 41 8B C8 48 C1 E8 ?? 83 E1 ?? BA ?? ?? ?? ?? D3 E2 84 94 38", DetourName = nameof(GetCutSceneRowDetour))]
     private static Hook<GetCutSceneRowDelegate>? GetCutSceneRowHook;
 
     private static uint CurrentCutscene;

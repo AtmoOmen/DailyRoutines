@@ -13,7 +13,7 @@ public unsafe class AutoRequestAllFCBags : DailyModuleBase
 {
     private delegate bool SendInventoryRefreshDelegate(InventoryManager* instance, int inventoryType);
 
-    [Signature("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 8B F2 48 8B D9 33 D2 0F B7 FA",
+    [Signature("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 8B DA 48 8B F1 33 D2 0F B7 FA",
                DetourName = nameof(SendInventoryRefreshDetour))]
     private static Hook<SendInventoryRefreshDelegate>? SendInventoryRefreshHook;
 

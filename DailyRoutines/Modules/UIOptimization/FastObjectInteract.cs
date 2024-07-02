@@ -35,7 +35,7 @@ public unsafe partial class FastObjectInteract : DailyModuleBase
     private static AgentWorldTravelReceiveEventDelegate? AgentWorldTravelReceiveEvent;
 
     private delegate nint WorldTravelSetupInfoDelegate(nint worldTravel, ushort currentWorld, ushort targetWorld);
-    [Signature("E8 ?? ?? ?? ?? 48 8D 8E ?? ?? ?? ?? E8 ?? ?? ?? ?? 4C 8B 05 ?? ?? ?? ?? 48 8D 4C 24 ?? 48 8B D0 E8 ?? ?? ?? ?? 48 8B 4E")]
+    [Signature("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 41 0F B7 F0 48 8B 49")]
     private static WorldTravelSetupInfoDelegate? WorldTravelSetupInfo;
 
     private static readonly Dictionary<ObjectKind, string> ObjectKindLoc = new()

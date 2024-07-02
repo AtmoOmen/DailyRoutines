@@ -15,7 +15,7 @@ namespace DailyRoutines.Modules;
 public unsafe class FastRidePillion : DailyModuleBase
 {
     private delegate nint AgentContextReceiveEventDelegate(AgentContext* agent, nint a2, nint a3, uint a4, nint a5);
-    [Signature("40 55 53 57 41 54 41 55 41 56 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 ?? 48 83 BD", DetourName = nameof(AgentContextReceiveEventDetour))]
+    [Signature("40 55 53 57 41 54 41 56 41 57 48 8D AC 24", DetourName = nameof(AgentContextReceiveEventDetour))]
     private static Hook<AgentContextReceiveEventDelegate>? AgentContextReceiveEventHook;
 
     private delegate void RidePillionDelegate(BattleChara* target, int seatIndex);

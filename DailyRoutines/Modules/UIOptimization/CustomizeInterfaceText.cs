@@ -30,8 +30,8 @@ public unsafe class CustomizeInterfaceText : DailyModuleBase
                DetourName = nameof(SetPlayerNamePlayerDetour))]
     private static Hook<SetPlayerNamePlateDelegate>? SetPlayerNamePlateHook;
 
-    [Signature("48 85 C9 0F 84 ?? ?? ?? ?? 4C 8B DC 53 55", DetourName = nameof(Utf8StringSetStringDetour))]
-    private static Hook<Utf8StringSetStringDelegate>? Utf8StringSetStringHook;
+    [Signature("E8 ?? ?? ?? ?? 48 83 C4 ?? 5B C3 CC CC CC CC CC CC CC CC CC CC 40 55 56 57 48 81 EC", DetourName = nameof(TextNodeSetStringDetour))]
+    private static Hook<TextNodeSetStringDelegate>? TextNodeSetStringHook;
 
     private static List<ReplacePattern> ReplacePatterns = [];
 
@@ -49,7 +49,7 @@ public unsafe class CustomizeInterfaceText : DailyModuleBase
         ReplacePatterns = GetConfig<List<ReplacePattern>>(nameof(ReplacePatterns));
 
         Service.Hook.InitializeFromAttributes(this);
-        Utf8StringSetStringHook?.Enable();
+        TextNodeSetStringHook?.Enable();
         SetPlayerNamePlateHook?.Enable();
     }
 
@@ -237,12 +237,12 @@ public unsafe class CustomizeInterfaceText : DailyModuleBase
         }
     }
 
-    private static void Utf8StringSetStringDetour(AtkTextNode* textNode, nint text)
+    private static void TextNodeSetStringDetour(AtkTextNode* textNode, nint text)
     {
         var origText = MemoryHelper.ReadSeStringNullTerminated(text);
         if (origText.Payloads.Count == 0)
         {
-            Utf8StringSetStringHook.Original(textNode, text);
+            TextNodeSetStringHook.Original(textNode, text);
             return;
         }
 
@@ -254,13 +254,13 @@ public unsafe class CustomizeInterfaceText : DailyModuleBase
             Marshal.Copy(modifiedText, 0, ptr, modifiedText.Length);
             Marshal.WriteByte(ptr, modifiedText.Length, 0);
 
-            Utf8StringSetStringHook.Original(textNode, ptr);
+            TextNodeSetStringHook.Original(textNode, ptr);
             Marshal.FreeHGlobal(ptr);
 
             return;
         }
 
-        Utf8StringSetStringHook.Original(textNode, text);
+        TextNodeSetStringHook.Original(textNode, text);
     }
 
     private static nint SetPlayerNamePlayerDetour(
@@ -361,7 +361,7 @@ public unsafe class CustomizeInterfaceText : DailyModuleBase
         nint namePlateObjectPtr, bool isPrefixTitle, bool displayTitle,
         nint titlePtr, nint namePtr, nint fcNamePtr, nint prefix, int iconId);
 
-    private delegate void Utf8StringSetStringDelegate(AtkTextNode* textNode, nint text);
+    private delegate void TextNodeSetStringDelegate(AtkTextNode* textNode, nint text);
 
     public class ReplacePattern : IComparable<ReplacePattern>, IEquatable<ReplacePattern>
     {
