@@ -66,17 +66,13 @@ public class OptimizedInteraction : DailyModuleBase
         SwitchHooks(true);
 
         Service.ClientState.TerritoryChanged += OnZoneChanged;
-        Task.Run(async () =>
-        {
-            await Service.Framework.RunOnFrameworkThread(() => Service.ClientState.TerritoryType != 0);
-            OnZoneChanged(Service.ClientState.TerritoryType);
-        });
+        OnZoneChanged(Service.ClientState.TerritoryType);
     }
 
     private static void OnZoneChanged(ushort zone)
     {
         var zoneData = LuminaCache.GetRow<TerritoryType>(zone);
-        SwitchHooks(!zoneData.IsPvpZone);
+        SwitchHooks(!zoneData?.IsPvpZone ?? false);
     }
 
     private static void SwitchHooks(bool isEnable)
