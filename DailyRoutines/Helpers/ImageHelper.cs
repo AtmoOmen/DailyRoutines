@@ -1,173 +1,200 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using DailyRoutines.Managers;
+using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
 
 namespace DailyRoutines.Helpers;
 
 public static class ImageHelper
 {
-    private class ImageState
+    internal class ImageLoadingResult
     {
-        public IDalamudTextureWrap? Texture    { get; set; }
-        public bool                 IsComplete { get; set; }
+        internal ISharedImmediateTexture? ImmediateTexture;
+        internal IDalamudTextureWrap? TextureWrap;
+
+        internal IDalamudTextureWrap? Texture =>
+            Service.Framework.RunOnFrameworkThread(() => ImmediateTexture?.GetWrapOrDefault() ?? TextureWrap).Result;
+        internal bool IsCompleted;
+        public ImageLoadingResult(ISharedImmediateTexture? immediateTexture) { ImmediateTexture = immediateTexture; }
+        public ImageLoadingResult(IDalamudTextureWrap? textureWrap) { TextureWrap = textureWrap; }
+        public ImageLoadingResult() { }
     }
 
-    private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(10) };
-    private static readonly ConcurrentDictionary<string, ImageState> FileImages = [];
-    private static readonly ConcurrentDictionary<(uint ID, bool isHQ), ImageState> IconImages = [];
-    private static readonly SemaphoreSlim LoadingSemaphore = new(1, 1);
+    internal static ConcurrentDictionary<string, ImageLoadingResult> CachedTextures = new();
+    internal static ConcurrentDictionary<(uint ID, bool HQ), ImageLoadingResult> CachedIcons = new();
 
-    private static void ExecuteOnMainThread(Action action)
+    private static readonly List<Func<byte[], byte[]>> _conversionsToBitmap = [b => b];
+
+    private static volatile bool ThreadRunning;
+    internal static HttpClient? httpClient;
+
+    public static void ClearAll()
     {
-        Service.Framework.RunOnFrameworkThread(action).Wait();
+        foreach (var x in CachedTextures)
+            Safe(() => { x.Value.TextureWrap?.Dispose(); });
+
+        Safe(CachedTextures.Clear);
+        foreach (var x in CachedIcons)
+            Safe(() => { x.Value.TextureWrap?.Dispose(); });
+
+        Safe(CachedIcons.Clear);
     }
 
     public static IDalamudTextureWrap? GetIcon(uint iconID, bool isHQ = false)
-        => GetOrLoadImage(IconImages, (iconID, isHQ), () => LoadGameIcon(iconID, isHQ));
+    {
+        TryGetIconTextureWrap(iconID, isHQ, out var texture);
+        return texture;
+    }
 
     public static IDalamudTextureWrap? GetImage(string urlOrPath)
-        => GetOrLoadImage(FileImages, urlOrPath, () => LoadImage(urlOrPath));
+    {
+        TryGetTextureWrap(urlOrPath, out var texture);
+        return texture;
+    }
 
-    public static bool TryGetIcon(uint iconID, out IDalamudTextureWrap? image, bool isHQ = false)
-        => TryGetOrLoadImage(IconImages, (iconID, isHQ), () => LoadGameIcon(iconID, isHQ), out image);
+    public static bool TryGetImage(string urlOrPath, out IDalamudTextureWrap? textureWrap)
+        => TryGetTextureWrap(urlOrPath, out textureWrap);
 
-    public static bool TryGetImage(string url, out IDalamudTextureWrap? image)
-        => TryGetOrLoadImage(FileImages, url, () => LoadImage(url), out image);
+    public static bool TryGetIconTextureWrap(uint icon, bool hq, out IDalamudTextureWrap? textureWrap)
+    {
+        if (!CachedIcons.TryGetValue((icon, hq), out var result))
+        {
+            result = new();
+            CachedIcons[(icon, hq)] = result;
+            BeginThreadIfNotRunning();
+        }
+
+        textureWrap = result.Texture;
+        return result.Texture != null;
+    }
+
+    public static bool TryGetTextureWrap(string url, out IDalamudTextureWrap? textureWrap)
+    {
+        if (!CachedTextures.TryGetValue(url, out var result))
+        {
+            result = new();
+            CachedTextures[url] = result;
+            BeginThreadIfNotRunning();
+        }
+
+        textureWrap = result.Texture;
+        return result.Texture != null;
+    }
 
     public static async Task<IDalamudTextureWrap?> GetImageAsync(string urlOrPath)
     {
-        if (FileImages.TryGetValue(urlOrPath, out var state) && state.IsComplete)
-            return state.Texture;
-
-        await LoadingSemaphore.WaitAsync();
-        try
+        TryGetTextureWrap(urlOrPath, out var texture);
+        while (texture == null)
         {
-            if (FileImages.TryGetValue(urlOrPath, out state) && state.IsComplete)
-                return state.Texture;
+            await Task.Delay(100);
+            TryGetTextureWrap(urlOrPath, out texture);
+        }
 
-            if (!FileImages.TryGetValue(urlOrPath, out state))
-            {
-                state = new ImageState();
-                FileImages[urlOrPath] = state;
-            }
+        return texture;
+    }
 
-            if (!state.IsComplete)
+    internal static void BeginThreadIfNotRunning()
+    {
+        httpClient ??= new()
+        {
+            Timeout = TimeSpan.FromSeconds(10),
+        };
+
+        if (ThreadRunning) return;
+        NotifyHelper.Verbose("Starting ThreadLoadImageHandler");
+        ThreadRunning = true;
+        new Thread(() =>
+        {
+            var idleTicks = 0;
+            Safe(delegate
             {
-                var texture = await LoadImage(urlOrPath);
-                ExecuteOnMainThread(() =>
+                while (idleTicks < 100)
                 {
-                    state.Texture = texture;
-                    state.IsComplete = true;
-                });
-            }
+                    Safe(delegate
+                    {
+                        {
+                            if (CachedTextures.TryGetFirst(x => x.Value.IsCompleted == false, out var keyValuePair))
+                            {
+                                idleTicks = 0;
+                                keyValuePair.Value.IsCompleted = true;
+                                NotifyHelper.Verbose("Loading image " + keyValuePair.Key);
+                                if (keyValuePair.Key.StartsWith("http:", StringComparison.OrdinalIgnoreCase) ||
+                                    keyValuePair.Key.StartsWith("https:", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    var result = httpClient.GetAsync(keyValuePair.Key).Result;
+                                    result.EnsureSuccessStatusCode();
+                                    var content = result.Content.ReadAsByteArrayAsync().Result;
 
-            return state.Texture;
-        } finally
-        {
-            LoadingSemaphore.Release();
-        }
-    }
+                                    IDalamudTextureWrap texture = null;
+                                    foreach (var conversion in _conversionsToBitmap)
+                                        try
+                                        {
+                                            texture = Service.Texture.CreateFromImageAsync(conversion(content)).Result;
+                                            break;
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            NotifyHelper.Error("", ex);
+                                        }
 
-    private static IDalamudTextureWrap? GetOrLoadImage<TKey>(
-        ConcurrentDictionary<TKey, ImageState> cache, TKey key, Func<Task<IDalamudTextureWrap?>> loader)
-        where TKey : notnull
-    {
-        if (cache.TryGetValue(key, out var state) && state.IsComplete)
-            return state.Texture;
+                                    keyValuePair.Value.TextureWrap = texture;
+                                }
+                                else
+                                {
+                                    if (File.Exists(keyValuePair.Key))
+                                        keyValuePair.Value.ImmediateTexture = Service.Texture.GetFromFile(keyValuePair.Key);
+                                    else
+                                        keyValuePair.Value.ImmediateTexture = Service.Texture.GetFromGame(keyValuePair.Key);
+                                }
+                            }
+                        }
 
-        _ = LoadImageAsync(cache, key, loader);
-        return null;
-    }
+                        {
+                            if (CachedIcons.TryGetFirst(x => x.Value.IsCompleted == false, out var keyValuePair))
+                            {
+                                idleTicks = 0;
+                                keyValuePair.Value.IsCompleted = true;
+                                NotifyHelper.Verbose($"Loading icon {keyValuePair.Key.ID}, hq={keyValuePair.Key.HQ}");
+                                keyValuePair.Value.ImmediateTexture =
+                                    Service.Texture.GetFromGameIcon(new(keyValuePair.Key.ID, hiRes: keyValuePair.Key.HQ));
+                            }
+                        }
+                    });
 
-    private static bool TryGetOrLoadImage<TKey>(
-        ConcurrentDictionary<TKey, ImageState> cache, TKey key, Func<Task<IDalamudTextureWrap?>> loader,
-        out IDalamudTextureWrap? image) where TKey : notnull
-    {
-        if (cache.TryGetValue(key, out var state) && state.IsComplete)
-        {
-            image = state.Texture;
-            return image != null;
-        }
-
-        _ = LoadImageAsync(cache, key, loader);
-        image = null;
-        return false;
-    }
-
-    private static async Task LoadImageAsync<TKey>(
-        ConcurrentDictionary<TKey, ImageState> cache, TKey key, Func<Task<IDalamudTextureWrap?>> loader)
-        where TKey : notnull
-    {
-        await LoadingSemaphore.WaitAsync();
-        try
-        {
-            if (!cache.TryGetValue(key, out var state))
-            {
-                state = new ImageState();
-                cache[key] = state;
-            }
-
-            if (!state.IsComplete)
-            {
-                var texture = await loader();
-                ExecuteOnMainThread(() =>
-                {
-                    state.Texture = texture;
-                    state.IsComplete = true;
-                });
-            }
-        } finally
-        {
-            LoadingSemaphore.Release();
-        }
-    }
-
-    private static async Task<IDalamudTextureWrap?> LoadGameIcon(uint iconID, bool isHQ)
-    {
-        var iconData = await Task.Run(() => Service.Texture.GetFromGameIcon(new(iconID, isHQ)));
-        IDalamudTextureWrap? result = null;
-        ExecuteOnMainThread(() => result = iconData.GetWrapOrDefault());
-        return result;
-    }
-
-    private static async Task<IDalamudTextureWrap?> LoadImage(string urlOrPath)
-    {
-        byte[] content;
-        if (urlOrPath.StartsWith("http:", StringComparison.OrdinalIgnoreCase) ||
-            urlOrPath.StartsWith("https:", StringComparison.OrdinalIgnoreCase))
-        {
-            using var response = await HttpClient.GetAsync(urlOrPath);
-            response.EnsureSuccessStatusCode();
-            content = await response.Content.ReadAsByteArrayAsync();
-        }
-        else
-        {
-            IDalamudTextureWrap? result = null;
-            ExecuteOnMainThread(() =>
-            {
-                result = File.Exists(urlOrPath)
-                             ? Service.Texture.GetFromFile(urlOrPath).GetWrapOrDefault()
-                             : Service.Texture.GetFromGame(urlOrPath).GetWrapOrDefault();
+                    idleTicks++;
+                    if (CachedTextures.All(x => x.Value.IsCompleted) && CachedIcons.All(x => x.Value.IsCompleted))
+                        Thread.Sleep(100);
+                }
             });
 
-            return result;
-        }
+            NotifyHelper.Verbose($"Stopping ThreadLoadImageHandler, ticks={idleTicks}");
+            ThreadRunning = false;
+        }).Start();
+    }
 
+    public static void AddConversionToBitmap(Func<byte[], byte[]> conversion) { _conversionsToBitmap.Add(conversion); }
+
+    public static void RemoveConversionToBitmap(Func<byte[], byte[]> conversion)
+    {
+        _conversionsToBitmap.Remove(conversion);
+    }
+
+    private static void Safe(Action action)
+    {
         try
         {
-            IDalamudTextureWrap? result = null;
-            ExecuteOnMainThread(async () => result = await Service.Texture.CreateFromImageAsync(content));
-            return result;
+            action();
         }
         catch (Exception ex)
         {
-            NotifyHelper.Error("", ex);
-            return null;
+            NotifyHelper.Error("Error in Safe action", ex);
         }
     }
 }
