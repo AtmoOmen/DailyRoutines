@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using DailyRoutines.Helpers;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
-
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 
@@ -38,23 +37,26 @@ public class AutoSummonPet : DailyModuleBase
     // 进入副本
     private void OnZoneChanged(ushort zone)
     {
+        TaskHelper.Abort();
         if (!PresetData.Contents.ContainsKey(zone) || Service.ClientState.IsPvP) return;
 
-        TaskHelper.Abort();
         TaskHelper.DelayNext(1000);
         TaskHelper.Enqueue(CheckCurrentJob);
     }
 
-    private static unsafe bool? CheckCurrentJob()
+    private unsafe bool? CheckCurrentJob()
     {
-        if (Flags.BetweenAreas) return false;
-        if (!IsScreenReady()) return false;
+        if (Flags.BetweenAreas || !IsScreenReady()) return false;
 
         var player = Service.ClientState.LocalPlayer;
-        if (player == null || player.ClassJob.Id == 0 || !player.IsTargetable) return false;
+        var job = player?.ClassJob.Id ?? 0;
+        if (player == null || job == 0 || !player.IsTargetable) return false;
 
-        var job = player.ClassJob.Id;
-        if (!SummonActions.TryGetValue(job, out var actionID)) return true;
+        if (!SummonActions.TryGetValue(job, out var actionID))
+        {
+            TaskHelper.Abort();
+            return true;
+        }
 
         if (Flags.OccupiedInEvent) return false;
 

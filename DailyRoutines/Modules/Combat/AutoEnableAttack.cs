@@ -2,7 +2,7 @@ using DailyRoutines.Infos;
 
 namespace DailyRoutines.Modules;
 
-[ModuleDescription("AutoEnableAttackTitle", "AutoEnableAttackDescription", ModuleCategories.技能)]
+[ModuleDescription("AutoEnableAttackTitle", "AutoEnableAttackDescription", ModuleCategories.战斗)]
 public class AutoEnableAttack : DailyModuleBase
 {
     private static readonly MemoryPatch AutoAttackPatch = 

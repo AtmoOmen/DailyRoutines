@@ -76,6 +76,12 @@ public enum ExecuteCommandFlag
     InstantReturn = 214,
 
     /// <summary>
+    /// 检查指定玩家
+    /// <para><c>param1</c>: 待对象 Object ID</para>
+    /// </summary>
+    Inspect = 300,
+
+    /// <summary>
     /// 更改佩戴的称号
     /// <para><c>param1</c>: 称号 ID</para>
     /// </summary>

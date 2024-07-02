@@ -10,10 +10,11 @@ namespace DailyRoutines.Modules;
 [ModuleDescription("AutoRefocusTitle", "AutoRefocusDescription", ModuleCategories.战斗)]
 public unsafe class AutoRefocus : DailyModuleBase
 {
+    private delegate void SetFocusTargetByObjectIDDelegate(TargetSystem* targetSystem, ulong objectID);
     [Signature("E8 ?? ?? ?? ?? BA 0C 00 00 00 48 8D 0D", DetourName = nameof(SetFocusTargetByObjectID))]
     private static Hook<SetFocusTargetByObjectIDDelegate>? SetFocusTargetByObjectIDHook;
 
-    private static ulong? FocusTarget;
+    private static ulong FocusTarget;
     private static bool IsNeedToRefocus;
 
     public override void Init()
@@ -28,30 +29,22 @@ public unsafe class AutoRefocus : DailyModuleBase
 
     private static void OnZoneChange(ushort territory)
     {
-        FocusTarget = null;
+        FocusTarget = 0;
         IsNeedToRefocus = PresetData.Contents.ContainsKey(territory);
     }
 
     private static void OnUpdate(IFramework framework)
     {
-        if (!IsNeedToRefocus || FocusTarget == null) return;
-        if (Throttler.Throttle("AutoRefocus", 1000))
-        {
-            if (Service.Target.FocusTarget == null)
-                SetFocusTargetByObjectIDHook.Original(TargetSystem.StaticAddressPointers.pInstance, (ulong)FocusTarget);
-        }
+        if (!Throttler.Throttle("AutoRefocus", 1000)) return;
+        if (!IsNeedToRefocus || FocusTarget == 0 || FocusTarget == 0xE000_0000) return;
+
+        if (Service.Target.FocusTarget == null)
+            SetFocusTargetByObjectIDHook.Original(TargetSystem.Instance(), FocusTarget);
     }
 
     private static void SetFocusTargetByObjectID(TargetSystem* targetSystem, ulong objectID)
     {
-        if (objectID == 0xE000_0000)
-        {
-            objectID = Service.Target.Target?.GameObjectId ?? 0xE000_0000;
-            FocusTarget = Service.Target.Target?.GameObjectId;
-        }
-        else
-            FocusTarget = Service.Target.Target.GameObjectId;
-
+        FocusTarget = objectID;
         SetFocusTargetByObjectIDHook.Original(targetSystem, objectID);
     }
 
@@ -61,6 +54,4 @@ public unsafe class AutoRefocus : DailyModuleBase
 
         base.Uninit();
     }
-
-    private delegate void SetFocusTargetByObjectIDDelegate(TargetSystem* targetSystem, ulong objectID);
 }

@@ -65,4 +65,4 @@ jobs:
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
           git add Assets/changelog.txt Assets/changelog_time.txt
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update changelog and release time" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update changelog and release time" && git push origin HEAD:main)

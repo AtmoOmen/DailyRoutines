@@ -2322,4 +2322,13 @@ A / B / C / D / 1 / 2 / 3 / 4</value>
   <data name="Settings-LeftTabWidth" xml:space="preserve">
     <value>左侧边栏宽度</value>
   </data>
+  <data name="AutoLeveQuests-NoDelayHelp" xml:space="preserve">
+    <value>注: 模块运行时自动屏蔽目标选择、模型旋转数据上传服务器, 故没有任何延迟调整选项</value>
+  </data>
+  <data name="AutoPetFollowDescription" xml:space="preserve">
+    <value>脱战后, 若当前场上存在自身召唤物, 则自动对其下达跟随命令</value>
+  </data>
+  <data name="AutoPetFollowTitle" xml:space="preserve">
+    <value>自动召唤物跟随</value>
+  </data>
 </root>

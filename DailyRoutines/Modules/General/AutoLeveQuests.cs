@@ -11,6 +11,7 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Hooking;
 using Dalamud.Interface;
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Application.Network.WorkDefinitions;
@@ -57,7 +58,11 @@ public unsafe class AutoLeveQuests : DailyModuleBase
 
     public override void ConfigUI()
     {
-        var childSize = new Vector2(420f, 300f);
+        ImGui.TextColored(ImGuiColors.DalamudOrange, Service.Lang.GetText("AutoLeveQuests-NoDelayHelp"));
+
+        ImGui.Spacing();
+
+        var childSize = ScaledVector2(420f, 300f);
         ImGuiOm.DisableZoneWithHelp(() =>
                                     {
                                         if (ImGui.BeginChild("LeveSelectChild", childSize, true))
@@ -141,7 +146,7 @@ public unsafe class AutoLeveQuests : DailyModuleBase
         ImGuiOm.DisableZoneWithHelp(() =>
         {
             if (ImGuiOm.ButtonIconWithTextVertical(FontAwesomeIcon.Play, Service.Lang.GetText("Start"),
-                                                   ScaledVector2(167f, 45f)))
+                                                   ScaledVector2(167f, 60f)))
             {
                 Service.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", AlwaysYes);
                 Service.ExecuteCommandManager.Register(OnPreExecuteCommand);
@@ -158,7 +163,7 @@ public unsafe class AutoLeveQuests : DailyModuleBase
 
         ImGui.SameLine();
         if (ImGuiOm.ButtonIconWithTextVertical(FontAwesomeIcon.Pause, Service.Lang.GetText("Stop"),
-                                               ScaledVector2(167f, 45f)))
+                                               ScaledVector2(167f, 60f)))
         {
             TaskHelper.Abort();
             Service.AddonLifecycle.UnregisterListener(AlwaysYes);

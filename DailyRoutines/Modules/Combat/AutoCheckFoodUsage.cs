@@ -308,7 +308,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
     private nint CountdownInitDetour(nint a1, nint a2)
     {
         var original = CountdownInitHook.Original(a1, a2);
-        Service.Log.Debug("测试倒计时");
+
         if (ModuleConfig.EnabledCheckpoints[FoodCheckpoint.倒计时开始时])
             TaskHelper.Enqueue(() => EnqueueFoodRefresh());
 
