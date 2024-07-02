@@ -21,7 +21,7 @@ def get_total_downloads(user_name, repo_name):
             for asset in release['assets']:
                 total_downloads += asset['download_count'] * 2
         page += 1
-    return total_downloads
+    return total_downloads + 171320
 
 user_name = 'AtmoOmen'
 repo_name = 'DailyRoutines'
