@@ -29,7 +29,7 @@ public unsafe class UseActionManager : IDailyManager
     internal static Hook<useActionLocationDelegate>? UseActionLocationHook;
 
     internal delegate bool useActionPetMoveDelegate(int a1, Vector3* position, int petActionID, int a4, int a5, int a6);
-    [Signature("E8 ?? ?? ?? ?? EB 1A 48 8B 53 08", DetourName = nameof(UseActionPetMoveDetour))]
+    [Signature("E8 ?? ?? ?? ?? EB ?? 48 8B 53 ?? 33 C0", DetourName = nameof(UseActionPetMoveDetour))]
     internal static Hook<useActionPetMoveDelegate>? UseActionPetMoveHook;
 
     // PreUseAction

@@ -37,23 +37,23 @@ public unsafe class AddonHelper
     {
         FireCallback ??=
             Marshal.GetDelegateForFunctionPointer<FireCallbackDelegate>(
-                Service.SigScanner.ScanText("E8 ?? ?? ?? ?? 8B 4C 24 20 0F B6 D8"));
+                Service.SigScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 44 24 ?? 0F B7 81"));
 
         GetAtkValueInt ??= Marshal.GetDelegateForFunctionPointer<GetAtkValueIntDelegate>
-            (Service.SigScanner.ScanText("E8 ?? ?? ?? ?? C6 45 ?? ?? 8D 48"));
+            (Service.SigScanner.ScanText("F6 01 ?? 75 ?? 33 C0 C3 8B 41 ?? C3 CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC F6 01 ?? 75 ?? 33 C0"));
 
         GetAtkValueString ??= Marshal.GetDelegateForFunctionPointer<GetAtkValueStringDelegate>(
             Service.SigScanner.ScanText("E8 ?? ?? ?? ?? 33 D2 48 8D 8B ?? ?? ?? ?? 41 B8 ?? ?? ?? ?? 48 8B F8"));
 
         GetAtkValueUInt ??=
             Marshal.GetDelegateForFunctionPointer<GetAtkValueUIntDelegate>(
-                Service.SigScanner.ScanText("E8 ?? ?? ?? ?? 8B D0 EB ?? E8"));
+                Service.SigScanner.ScanText("F6 01 ?? 75 ?? 33 C0 C3 8B 41 ?? C3 CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC F6 01 ?? 75 ?? 33 C0 C3 48 8B 41 ?? C3 CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC F6 01 ?? 75 ?? 0F 57 C0"));
 
         GetAddonByNode ??= Marshal.GetDelegateForFunctionPointer<GetAddonByNodeDelegate>
-            (Service.SigScanner.ScanText("48 83 EC ?? 4C 8B D2 4C 8B D9 48 85 D2 75"));
+            (Service.SigScanner.ScanText("48 89 5C 24 ?? 4C 8B D2 4C 8B D9"));
 
         SetComponentButtonChecked ??= Marshal.GetDelegateForFunctionPointer<SetComponentButtonCheckedDelegate>
-            (Service.SigScanner.ScanText("E8 ?? ?? ?? ?? 0F B7 DD"));
+            (Service.SigScanner.ScanText("E8 ?? ?? ?? ?? 8D 46 12 ?? ?? ?? ?? ?? ?? ?? ??"));
     }
 
     public static bool IsScreenReady()

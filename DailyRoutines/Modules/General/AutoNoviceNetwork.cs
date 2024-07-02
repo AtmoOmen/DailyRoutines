@@ -118,12 +118,12 @@ public unsafe class AutoNoviceNetwork : DailyModuleBase
         });
     }
 
-    private static void TryJoin() => TryJoinNoviceNetwork(InfoModule.Instance()->GetInfoProxyById(20));
+    private static void TryJoin() => TryJoinNoviceNetwork(InfoModule.Instance()->GetInfoProxyById(InfoProxyId.CrossRealmParty));
 
     private static bool IsInNoviceNetwork()
     {
-        var infoProxy = InfoModule.Instance()->GetInfoProxyById(20);
-        return ((int)infoProxy[1].VTable & 1) != 0;
+        var infoProxy = InfoModule.Instance()->GetInfoProxyById(InfoProxyId.CrossRealmParty);
+        return ((int)infoProxy[1].VirtualTable & 1) != 0;
     }
 
     private void OnAfkStateCheck(object? sender, ElapsedEventArgs e)

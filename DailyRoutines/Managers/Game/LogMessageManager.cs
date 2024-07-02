@@ -26,15 +26,15 @@ public unsafe class LogMessageManager : IDailyManager
     private delegate void ShowLogMessageUInt3Delegate(RaptureLogModule* module, uint logMessageID, uint value1, uint value2, uint value3);
     private delegate void ShowLogMessageStringDelegate(RaptureLogModule* module, uint logMessageID, Utf8String* value);
 
-    [Signature("E8 ?? ?? ?? ?? 44 03 FB", DetourName = nameof(ShowLogMessageDetour))]
+    [Signature("48 89 5C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 55 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 85 ?? ?? ?? ?? 33 F6 8B DA", DetourName = nameof(ShowLogMessageDetour))]
     private Hook<ShowLogMessageDelegate>? ShowLogMessageHook;
-    [Signature("E8 ?? ?? ?? ?? 32 C0 EB 17", DetourName = nameof(ShowLogMessageUIntDetour))]
+    [Signature("48 89 5C 24 ?? 48 89 74 24 ?? 55 57 41 56 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 85 ?? ?? ?? ?? 45 33 F6 8B FA 33 D2", DetourName = nameof(ShowLogMessageUIntDetour))]
     private Hook<ShowLogMessageUIntDelegate>? ShowLogMessageUIntHook;
-    [Signature("E8 ?? ?? ?? ?? 0F B7 46 32", DetourName = nameof(ShowLogMessageUInt2Detour))]
+    [Signature("E8 ?? ?? ?? ?? 48 8B 4F ?? 48 8B 01 FF 50 ?? BA ?? ?? ?? ?? 48 8B C8 4C 8B 00 41 FF 50 ?? 45 33 FF", DetourName = nameof(ShowLogMessageUInt2Detour))]
     private Hook<ShowLogMessageUInt2Delegate>? ShowLogMessageUInt2Hook;
-    [Signature("E8 ?? ?? ?? ?? 40 84 ED 74 0A 8B D7", DetourName = nameof(ShowLogMessageUInt3Detour))]
+    [Signature("E8 ?? ?? ?? ?? 48 8B CB 48 8B 5C 24 ?? 48 8B 74 24 ?? 48 83 C4 ?? 5F E9 ?? ?? ?? ?? CC CC CC CC CC CC CC CC CC CC 48 89 5C 24", DetourName = nameof(ShowLogMessageUInt3Detour))]
     private Hook<ShowLogMessageUInt3Delegate>? ShowLogMessageUInt3Hook;
-    [Signature("E8 ?? ?? ?? ?? EB 68 48 8B 07", DetourName = nameof(ShowLogMessageStringDetour))]
+    [Signature("48 89 5C 24 ?? 55 56 57 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 85 ?? ?? ?? ?? 45 33 FF 8B F2", DetourName = nameof(ShowLogMessageStringDetour))]
     private Hook<ShowLogMessageStringDelegate>? ShowLogMessageStringHook;
 
     private RaptureLogModule* Module = null;
@@ -47,6 +47,7 @@ public unsafe class LogMessageManager : IDailyManager
         Module = UIModule.Instance()->GetRaptureLogModule();
 
         Service.Hook.InitializeFromAttributes(this);
+        
         ShowLogMessageHook?.Enable();
         ShowLogMessageUIntHook?.Enable();
         ShowLogMessageUInt2Hook?.Enable();
