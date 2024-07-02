@@ -1,3 +1,4 @@
+/*
 using DailyRoutines.Helpers;
 using DailyRoutines.Managers;
 using Dalamud;
@@ -85,3 +86,4 @@ public unsafe class AutoRefreshMarketSearchResult : DailyModuleBase
         void* unk1, void* unk2, void* unk3, void* unk4, void* unk5, void* unk6,
         void* unk7);
 }
+*/

@@ -2,9 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 using DailyRoutines.Managers;
 using Dalamud.Interface.Textures;
@@ -14,38 +12,22 @@ namespace DailyRoutines.Helpers;
 
 public static class ImageHelper
 {
-    internal class ImageLoadingResult
+    private record ImageLoadingResult
     {
-        internal ISharedImmediateTexture? ImmediateTexture;
-        internal IDalamudTextureWrap? TextureWrap;
+        public ISharedImmediateTexture? ImmediateTexture { get; set; }
+        public IDalamudTextureWrap?     TextureWrap      { get; set; }
+        public bool                     IsCompleted      { get; set; }
 
-        internal IDalamudTextureWrap? Texture =>
+        public IDalamudTextureWrap? Texture =>
             Service.Framework.RunOnFrameworkThread(() => ImmediateTexture?.GetWrapOrDefault() ?? TextureWrap).Result;
-        internal bool IsCompleted;
-        public ImageLoadingResult(ISharedImmediateTexture? immediateTexture) { ImmediateTexture = immediateTexture; }
-        public ImageLoadingResult(IDalamudTextureWrap? textureWrap) { TextureWrap = textureWrap; }
-        public ImageLoadingResult() { }
     }
 
-    internal static ConcurrentDictionary<string, ImageLoadingResult> CachedTextures = new();
-    internal static ConcurrentDictionary<(uint ID, bool HQ), ImageLoadingResult> CachedIcons = new();
+    private static readonly ConcurrentDictionary<string, ImageLoadingResult> CachedTextures = [];
+    private static readonly ConcurrentDictionary<(uint ID, bool HQ), ImageLoadingResult> CachedIcons = [];
+    private static readonly List<Func<byte[], byte[]>> ConversionsToBitmap = [b => b];
 
-    private static readonly List<Func<byte[], byte[]>> _conversionsToBitmap = [b => b];
-
+    private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(10) };
     private static volatile bool ThreadRunning;
-    internal static HttpClient? httpClient;
-
-    public static void ClearAll()
-    {
-        foreach (var x in CachedTextures)
-            Safe(() => { x.Value.TextureWrap?.Dispose(); });
-
-        Safe(CachedTextures.Clear);
-        foreach (var x in CachedIcons)
-            Safe(() => { x.Value.TextureWrap?.Dispose(); });
-
-        Safe(CachedIcons.Clear);
-    }
 
     public static IDalamudTextureWrap? GetIcon(uint iconID, bool isHQ = false)
     {
@@ -102,99 +84,115 @@ public static class ImageHelper
 
     internal static void BeginThreadIfNotRunning()
     {
-        httpClient ??= new()
-        {
-            Timeout = TimeSpan.FromSeconds(10),
-        };
-
         if (ThreadRunning) return;
         NotifyHelper.Verbose("Starting ThreadLoadImageHandler");
         ThreadRunning = true;
-        new Thread(() =>
+        Task.Run(async () =>
         {
             var idleTicks = 0;
-            Safe(delegate
-            {
-                while (idleTicks < 100)
+            while (idleTicks < 100)
+                if (await LoadPendingTexturesAsync() || await LoadPendingIconsAsync())
+                    idleTicks = 0;
+                else
                 {
-                    Safe(delegate
-                    {
-                        {
-                            if (CachedTextures.TryGetFirst(x => x.Value.IsCompleted == false, out var keyValuePair))
-                            {
-                                idleTicks = 0;
-                                keyValuePair.Value.IsCompleted = true;
-                                NotifyHelper.Verbose("Loading image " + keyValuePair.Key);
-                                if (keyValuePair.Key.StartsWith("http:", StringComparison.OrdinalIgnoreCase) ||
-                                    keyValuePair.Key.StartsWith("https:", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    var result = httpClient.GetAsync(keyValuePair.Key).Result;
-                                    result.EnsureSuccessStatusCode();
-                                    var content = result.Content.ReadAsByteArrayAsync().Result;
-
-                                    IDalamudTextureWrap texture = null;
-                                    foreach (var conversion in _conversionsToBitmap)
-                                        try
-                                        {
-                                            texture = Service.Texture.CreateFromImageAsync(conversion(content)).Result;
-                                            break;
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            NotifyHelper.Error("", ex);
-                                        }
-
-                                    keyValuePair.Value.TextureWrap = texture;
-                                }
-                                else
-                                {
-                                    if (File.Exists(keyValuePair.Key))
-                                        keyValuePair.Value.ImmediateTexture = Service.Texture.GetFromFile(keyValuePair.Key);
-                                    else
-                                        keyValuePair.Value.ImmediateTexture = Service.Texture.GetFromGame(keyValuePair.Key);
-                                }
-                            }
-                        }
-
-                        {
-                            if (CachedIcons.TryGetFirst(x => x.Value.IsCompleted == false, out var keyValuePair))
-                            {
-                                idleTicks = 0;
-                                keyValuePair.Value.IsCompleted = true;
-                                NotifyHelper.Verbose($"Loading icon {keyValuePair.Key.ID}, hq={keyValuePair.Key.HQ}");
-                                keyValuePair.Value.ImmediateTexture =
-                                    Service.Texture.GetFromGameIcon(new(keyValuePair.Key.ID, hiRes: keyValuePair.Key.HQ));
-                            }
-                        }
-                    });
-
                     idleTicks++;
-                    if (CachedTextures.All(x => x.Value.IsCompleted) && CachedIcons.All(x => x.Value.IsCompleted))
-                        Thread.Sleep(100);
+                    await Task.Delay(100);
                 }
-            });
 
             NotifyHelper.Verbose($"Stopping ThreadLoadImageHandler, ticks={idleTicks}");
             ThreadRunning = false;
-        }).Start();
+        });
     }
 
-    public static void AddConversionToBitmap(Func<byte[], byte[]> conversion) { _conversionsToBitmap.Add(conversion); }
-
-    public static void RemoveConversionToBitmap(Func<byte[], byte[]> conversion)
+    private static async Task<bool> LoadPendingTexturesAsync()
     {
-        _conversionsToBitmap.Remove(conversion);
+        if (CachedTextures.TryGetFirst(x => x.Value.IsCompleted == false, out var keyValuePair))
+        {
+            keyValuePair.Value.IsCompleted = true;
+            try
+            {
+                if (Uri.TryCreate(keyValuePair.Key, UriKind.Absolute, out var uri) &&
+                    uri.Scheme is "http" or "https")
+                {
+                    var content = await HttpClient.GetByteArrayAsync(uri);
+                    foreach (var conversion in ConversionsToBitmap)
+                        try
+                        {
+                            var texture = await Service.Texture.CreateFromImageAsync(conversion(content));
+                            keyValuePair.Value.TextureWrap = texture;
+                            return true;
+                        }
+                        catch (Exception ex)
+                        {
+                            NotifyHelper.Error($"Error converting image: {uri}", ex);
+                        }
+                }
+
+                keyValuePair.Value.ImmediateTexture = File.Exists(keyValuePair.Key)
+                                                          ? Service.Texture.GetFromFile(keyValuePair.Key)
+                                                          : Service.Texture.GetFromGame(keyValuePair.Key);
+            }
+            catch (Exception ex)
+            {
+                NotifyHelper.Error($"Error loading image: {keyValuePair.Key}", ex);
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
-    private static void Safe(Action action)
+    private static async Task<bool> LoadPendingIconsAsync()
     {
-        try
+        return await Task.Run(() =>
         {
-            action();
-        }
-        catch (Exception ex)
-        {
-            NotifyHelper.Error("Error in Safe action", ex);
-        }
+            if (CachedIcons.TryGetFirst(x => x.Value.IsCompleted == false, out var keyValuePair))
+            {
+                keyValuePair.Value.IsCompleted = true;
+                NotifyHelper.Verbose($"Loading icon {keyValuePair.Key.ID}, hq={keyValuePair.Key.HQ}");
+                try
+                {
+                    keyValuePair.Value.ImmediateTexture =
+                        Service.Texture.GetFromGameIcon(new(keyValuePair.Key.ID, hiRes: keyValuePair.Key.HQ));
+                }
+                catch (Exception ex)
+                {
+                    NotifyHelper.Error($"Error loading icon: {keyValuePair.Key.ID}, hq={keyValuePair.Key.HQ}", ex);
+                }
+
+                return Task.FromResult(true);
+            }
+
+            return Task.FromResult(false);
+        });
     }
+
+    public static void ClearAll()
+    {
+        foreach (var (_, value) in CachedTextures)
+            try
+            {
+                value.TextureWrap?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                NotifyHelper.Error("Error disposing texture", ex);
+            }
+
+        CachedTextures.Clear();
+
+        foreach (var (_, value) in CachedIcons)
+            try
+            {
+                value.TextureWrap?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                NotifyHelper.Error("Error disposing icon", ex);
+            }
+
+        CachedIcons.Clear();
+    }
+
 }
