@@ -1,7 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
 using DailyRoutines.Helpers;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
@@ -10,10 +10,7 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Hooking;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Internal;
-using Dalamud.Interface.Utility;
-using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin.Services;
+using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
@@ -27,10 +24,9 @@ using Achievement = FFXIVClientStructs.FFXIV.Client.Game.UI.Achievement;
 namespace DailyRoutines.Modules;
 
 [ModuleDescription("BetterFateProgressUITitle", "BetterFateProgressUIDescription", ModuleCategories.界面优化)]
-public unsafe class BetterFateProgressUI : DailyModuleBase
+public class BetterFateProgressUI : DailyModuleBase
 {
-    private delegate void ReceiveAchievementProgressDelegate(Achievement* achievement, uint id, uint current, uint max);
-
+    private unsafe delegate void ReceiveAchievementProgressDelegate(Achievement* achievement, uint id, uint current, uint max);
     [Signature("C7 81 ?? ?? ?? ?? ?? ?? ?? ?? 89 91 ?? ?? ?? ?? 44 89 81", DetourName = nameof(ReceiveAchievementProgressDetour))]
     private static Hook<ReceiveAchievementProgressDelegate>? ReceiveAchievementProgressHook;
 
@@ -84,7 +80,7 @@ public unsafe class BetterFateProgressUI : DailyModuleBase
         ObtainAllFateProgress();
         RefreshBackground();
 
-        BicolorGemIcon ??= ImageHelper.GetIcon(LuminaCache.GetRow<Item>(26807).Icon, ITextureProvider.IconFlags.HiRes);
+        BicolorGemIcon ??= ImageHelper.GetIcon(LuminaCache.GetRow<Item>(26807).Icon);
         BicolorGemCap = LuminaCache.GetRow<Item>(26807).StackSize;
 
         Overlay ??= new Overlay(this);
@@ -101,7 +97,7 @@ public unsafe class BetterFateProgressUI : DailyModuleBase
         Service.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "FateProgress", OnAddon);
     }
 
-    public override void OverlayPreDraw()
+    public override unsafe void OverlayPreDraw()
     {
         if (!Throttler.Throttle("Refresh", 10000)) return;
 
@@ -238,7 +234,7 @@ public unsafe class BetterFateProgressUI : DailyModuleBase
         ImGui.TextColored(ImGuiColors.ParsedGold, text);
     }
 
-    private static void HandleInteraction(uint achievementID, TerritoryType zoneSheetRow)
+    private static unsafe void HandleInteraction(uint achievementID, TerritoryType zoneSheetRow)
     {
         if (ImGui.IsItemHovered())
             ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
@@ -270,28 +266,32 @@ public unsafe class BetterFateProgressUI : DailyModuleBase
 
     private static void RefreshBackground()
     {
-        ZoneTextures.Clear();
-
-        const string uldPath = "ui/uld/FateProgress.uld";
-        const string fate3Path = "ui/uld/FlyingPermission3_hr1.tex";
-        const string fate4Path = "ui/uld/FlyingPermission4_hr1.tex";
-
-        var sbBackground = Service.Texture.GetTextureFromGame(fate3Path);
-        if (sbBackground != null)
+        Task.Run(async () =>
         {
-            for (var i = 0; i < 6; i++)
-                ZoneTextures[(uint)i] = Service.PluginInterface.UiBuilder.LoadUld(uldPath).LoadTexturePart(fate3Path, i);
-        }
+            ZoneTextures.Clear();
 
-        var ewBackground = Service.Texture.GetTextureFromGame(fate4Path);
-        if (ewBackground != null)
-        {
-            for (var i = 0; i < 6; i++)
-                ZoneTextures[(uint)i + 6] = Service.PluginInterface.UiBuilder.LoadUld(uldPath).LoadTexturePart(fate4Path, i);
-        }
+            const string uldPath = "ui/uld/FateProgress.uld";
+            const string fate3Path = "ui/uld/FlyingPermission3_hr1.tex";
+            const string fate4Path = "ui/uld/FlyingPermission4_hr1.tex";
+
+            var sbBackground = await ImageHelper.GetImageAsync(fate3Path);
+            if (sbBackground != null)
+            {
+                for (var i = 0; i < 6; i++)
+                    ZoneTextures[(uint)i] = Service.PluginInterface.UiBuilder.LoadUld(uldPath).LoadTexturePart(fate3Path, i);
+            }
+
+            var ewBackground = await ImageHelper.GetImageAsync(fate4Path);
+            if (ewBackground != null)
+            {
+                for (var i = 0; i < 6; i++)
+                    ZoneTextures[(uint)i + 6] =
+                        Service.PluginInterface.UiBuilder.LoadUld(uldPath).LoadTexturePart(fate4Path, i);
+            }
+        });
     }
 
-    private static void ReceiveAchievementProgressDetour(Achievement* achievement, uint id, uint current, uint max)
+    private static unsafe void ReceiveAchievementProgressDetour(Achievement* achievement, uint id, uint current, uint max)
     {
         ReceiveAchievementProgressHook.Original(achievement, id, current, max);
 
@@ -299,7 +299,7 @@ public unsafe class BetterFateProgressUI : DailyModuleBase
         FateProgress[id] = current;
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private unsafe void OnAddon(AddonEvent type, AddonArgs args)
     {
         var addon = (AtkUnitBase*)args.Addon;
         if (addon == null) return;

@@ -284,7 +284,7 @@ public unsafe partial class FastObjectInteract : DailyModuleBase
                 if (IsInInstancedArea && objectToSelect.Kind == ObjectKind.Aetheryte)
                 {
                     var gameObj = (GameObject*)objectToSelect.GameObject;
-                    if (Marshal.PtrToStringUTF8((nint)gameObj->Name) != AethernetShardName)
+                    if (gameObj->NameString != AethernetShardName)
                         instanceChangeObject = objectToSelect;
                 }
 
@@ -292,7 +292,7 @@ public unsafe partial class FastObjectInteract : DailyModuleBase
                     objectToSelect.Kind == ObjectKind.Aetheryte)
                 {
                     var gameObj = (GameObject*)objectToSelect.GameObject;
-                    if (Marshal.PtrToStringUTF8((nint)gameObj->Name) != AethernetShardName)
+                    if (gameObj->NameString != AethernetShardName)
                         worldTravelObject = objectToSelect;
                 }
 
@@ -335,7 +335,7 @@ public unsafe partial class FastObjectInteract : DailyModuleBase
         }
 
         tempObjects.Clear();
-        IsInInstancedArea = UIState.Instance()->AreaInstance.IsInstancedArea();
+        IsInInstancedArea = UIState.Instance()->PublicInstance.IsInstancedArea();
         IsOnWorldTravelling = localPlayer.OnlineStatus.Id == 25;
 
         foreach (var obj in Service.ObjectTable.ToArray())
@@ -397,12 +397,12 @@ public unsafe partial class FastObjectInteract : DailyModuleBase
     private void InstanceZoneChangeWidget(ObjectToSelect objectToSelect)
     {
         var gameObject = (GameObject*)objectToSelect.GameObject;
-        var instance = UIState.Instance()->AreaInstance;
+        var instance = UIState.Instance()->PublicInstance;
 
         ImGui.BeginGroup();
         for (var i = 1; i < InstancedAreaAmount + 1; i++)
         {
-            if (i == instance.Instance) continue;
+            if (i == instance.InstanceId) continue;
 
             ImGui.BeginDisabled(!objectToSelect.IsReacheable());
             if (ButtonCenterText($"InstanceChangeWidget_{i}",

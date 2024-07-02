@@ -70,9 +70,9 @@ public unsafe class AutoRefreshInvalidPortraits : DailyModuleBase
     private void EnqueueARound()
     {
         var module = RaptureGearsetModule.Instance();
-        for (var i = 0; i < module->EntriesSpan.Length; i++)
+        for (var i = 0; i < module->Entries.Length; i++)
         {
-            var entry = module->EntriesSpan[i];
+            var entry = module->Entries[i];
             if (!entry.Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists)) break;
 
             var il = i;

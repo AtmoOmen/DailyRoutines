@@ -54,21 +54,21 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
             return true;
         }
 
-        var pfArray = AgentHUD.Instance()->PartyMemberListSpan.ToArray();
+        var pfArray = AgentHUD.Instance()->PartyMembers.ToArray();
         foreach (var member in pfArray)
         {
-            if (member.ObjectId == Service.ClientState.LocalPlayer.ObjectId) continue;
+            if (member.Object->GetGameObjectId().ObjectId == Service.ClientState.LocalPlayer.GameObjectId) continue;
 
             TaskHelper.Enqueue(() =>
             {
                 if (!Throttler.Throttle("AutoCheckItemLevel-WaitExamineUI", 1000)) return false;
 
                 CurrentMember ??= member;
-                AgentInspect.Instance()->ExamineCharacter(member.ObjectId);
+                AgentInspect.Instance()->ExamineCharacter(member.Object->GetGameObjectId().ObjectId);
                 return AddonState.CharacterInspect != null;
             });
 
-            TaskHelper.DelayNext($"Delay_ForeachPF_{member.ObjectId}", 1000);
+            TaskHelper.DelayNext($"Delay_ForeachPF_{member.Object->GetGameObjectId().ObjectId}", 1000);
         }
 
         return true;
@@ -86,7 +86,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
             var container = InventoryManager.Instance()->GetInventoryContainer(InventoryType.Examine);
             if (container == null || container->Loaded != 1)
             {
-                AgentInspect.Instance()->ExamineCharacter(member.ObjectId);
+                AgentInspect.Instance()->ExamineCharacter(member.Object->GetGameObjectId().ObjectId);
                 return false;
             }
 
@@ -98,7 +98,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
                 {
                     case 0:
                     {
-                        var mainHand = LuminaCache.GetRow<Item>(container->GetInventorySlot(i)->ItemID);
+                        var mainHand = LuminaCache.GetRow<Item>(container->GetInventorySlot(i)->ItemId);
                         var category = mainHand.ClassJobCategory.Row;
                         if (HaveOffHandJobCategories.Contains(category))
                             itemSlotAmount++;
@@ -113,7 +113,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
                 var slot = container->GetInventorySlot(i);
                 if (slot == null) continue;
 
-                var itemID = slot->ItemID;
+                var itemID = slot->ItemId;
                 var item = LuminaCache.GetRow<Item>(itemID);
 
                 if (item.LevelItem.Row < lowestIL)

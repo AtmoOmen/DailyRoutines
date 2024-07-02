@@ -47,7 +47,7 @@ public unsafe class AutoCancelCast : DailyModuleBase
         var player = Service.ClientState.LocalPlayer;
         if (player.CastActionType != 1 || TargetAreaActions.Contains(player.CastActionId)) return true;
 
-        var obj = (GameObject*)CharacterManager.Instance()->LookupBattleCharaByObjectId(player.CastTargetObjectId);
+        var obj = (GameObject*)CharacterManager.Instance()->LookupBattleCharaByEntityId((uint)player.CastTargetObjectId);
         if (obj == null || ActionManager.CanUseActionOnTarget(player.CastActionId, obj)) return false;
 
         CancelCast();

@@ -292,7 +292,7 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
     private static List<PlayerInfo> GetBlacklistInfo(InfoProxyBlacklist* blacklist)
     {
         var list = new List<PlayerInfo>();
-        var stringArray = (nint*)AtkStage.GetSingleton()->AtkArrayDataHolder->StringArrays[14]->StringArray;
+        var stringArray = (nint*)AtkStage.Instance()->AtkArrayDataHolder->StringArrays[14]->StringArray;
         for (var num = 0u; num < blacklist->InfoProxyPageInterface.InfoProxyInterface.EntryCount; num++)
         {
             var playerName = MemoryHelper.ReadStringNullTerminated(stringArray[num]);

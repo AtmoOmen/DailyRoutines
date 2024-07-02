@@ -102,7 +102,7 @@ public unsafe class BiggerHDWindowText : DailyModuleBase
         if (textNode is null)
             return;
 
-        if (!TextWindows.TryGetValue(Marshal.PtrToStringUTF8((nint)addon->Name), out var info)) return;
+        if (!TextWindows.TryGetValue(addon->NameString, out var info)) return;
 
         if (!info.Modified)
         {

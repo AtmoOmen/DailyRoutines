@@ -179,8 +179,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
                         if (info.Key is 7551 or 7538) continue;
                         var statusResult = PresetData.Statuses[status];
                         ImGui.SameLine();
-                        ImGui.Image(Service.Texture.GetIcon(statusResult.Icon).ImGuiHandle,
-                                    ScaledVector2(24f));
+                        ImGui.Image(ImageHelper.GetIcon(statusResult.Icon).ImGuiHandle, ScaledVector2(24f));
 
                         ImGuiOm.TooltipHover(statusResult.Name.ExtractText());
                     }
@@ -214,7 +213,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
             !ModuleConfig.EnabledActions[actionID]) return;
 
         if (actionID is 7551 or 7538 &&
-            Service.Target.Target is not BattleChara { IsCasting: true, IsCastInterruptible: true } chara)
+            Service.Target.Target is not IBattleChara { IsCasting: true, IsCastInterruptible: true } chara)
         {
             isPrevented = true;
             return;
@@ -225,21 +224,21 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
         {
             case DetectType.Self:
                 statusManager = ((FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara*)
-                                    Service.ClientState.LocalPlayer.Address)->GetStatusManager;
+                                    Service.ClientState.LocalPlayer.Address)->GetStatusManager();
 
                 break;
             case DetectType.Target:
-                if (Service.Target.Target != null && Service.Target.Target is BattleChara)
+                if (Service.Target.Target != null && Service.Target.Target is IBattleChara)
                 {
                     statusManager = ((FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara*)
-                                        Service.Target.Target.Address)->GetStatusManager;
+                                        Service.Target.Target.Address)->GetStatusManager();
                 }
 
                 if (Service.Target.Target == null && targetID == 0xE000_0000)
                 {
                     statusManager =
                         ((FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara*)
-                            Service.ClientState.LocalPlayer.Address)->GetStatusManager;
+                            Service.ClientState.LocalPlayer.Address)->GetStatusManager();
                 }
 
                 break;
@@ -259,7 +258,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
                 var statusIndex = statusManager->GetStatusIndex(status);
                 if (statusIndex != -1 &&
                     (PresetData.Statuses[status].IsPermanent ||
-                     statusManager->StatusSpan[statusIndex].RemainingTime > ModuleConfig.OverlapThreshold))
+                     statusManager->Status[statusIndex].RemainingTime > ModuleConfig.OverlapThreshold))
                 {
                     isPrevented = true;
                     return;

@@ -12,7 +12,7 @@ namespace DailyRoutines.Managers;
 
 public class Service
 {
-    internal static void Init(DalamudPluginInterface pluginInterface)
+    internal static void Init(IDalamudPluginInterface pluginInterface)
     {
         // PluginInterface 初始化
         InitPluginInterface(pluginInterface);
@@ -38,7 +38,7 @@ public class Service
         }
     }
 
-    private static void InitPluginInterface(DalamudPluginInterface pluginInterface)
+    private static void InitPluginInterface(IDalamudPluginInterface pluginInterface)
     {
         PluginInterface = pluginInterface;
         PluginInterface.UiBuilder.DisableCutsceneUiHide = true;
@@ -99,7 +99,6 @@ public class Service
     [PluginService] public static IGamepadState Gamepad { get; private set; } = null!;
     [PluginService] public static IJobGauges JobGauges { get; private set; } = null!;
     [PluginService] public static IKeyState KeyState { get; private set; } = null!;
-    [PluginService] public static ILibcFunction LibcFunction { get; private set; } = null!;
     [PluginService] public static INotificationManager DalamudNotice { get; private set; } = null!;
     [PluginService] public static IObjectTable ObjectTable { get; private set; } = null!;
     [PluginService] public static IPartyFinderGui PartyFinder { get; private set; } = null!;
@@ -112,7 +111,7 @@ public class Service
 
     #endregion
 
-    public static DalamudPluginInterface PluginInterface       { get; private set; } = null!;
+    public static IDalamudPluginInterface PluginInterface       { get; private set; } = null!;
     public static Configuration          Config                { get; private set; } = null!;
     public static FontManager            FontManager           { get; private set; } = new();
     public static LanguageManager        Lang                  { get; private set; } = new();

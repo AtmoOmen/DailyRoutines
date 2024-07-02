@@ -12,8 +12,7 @@ public class AutoNotifyRecruitmentEnd : DailyModuleBase
 {
     public override void Init() { Service.Chat.ChatMessage += OnChatMessage; }
 
-    private static void OnChatMessage(
-        XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
+    private static void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool ishandled)
     {
         if (type != XivChatType.SystemMessage) return;
         if (Flags.BoundByDuty) return;

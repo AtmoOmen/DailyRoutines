@@ -293,7 +293,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
                 ImGui.Text(Service.Lang.GetText($"QuickChatPanel-{(isIndividual ? "Individual" : "Shared")}Macros"));
                 ImGui.Separator();
 
-                var span = isIndividual ? module->IndividualSpan : module->SharedSpan;
+                var span = isIndividual ? module->Individual : module->Shared;
                 for (var i = 0; i < span.Length; i++)
                 {
                     var macro = span.GetPointer(i);
@@ -660,10 +660,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
                     if (itemName.Length > longestText.Length) longestText = itemName;
 
                     var isConflictKeyHolding = Service.KeyState[Service.Config.ConflictKey];
-                    var icon = ImageHelper.GetIcon(item.Icon,
-                                                   isConflictKeyHolding
-                                                       ? ITextureProvider.IconFlags.ItemHighQuality
-                                                       : ITextureProvider.IconFlags.None).ImGuiHandle;
+                    var icon = ImageHelper.GetIcon(item.Icon, isConflictKeyHolding).ImGuiHandle;
 
                     if (ImGuiOm.SelectableImageWithText(icon, ScaledVector2(24f), itemName, false))
                         Service.Chat.Print(new SeStringBuilder().AddItemLink(item.RowId, isConflictKeyHolding).Build());
@@ -742,7 +739,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
                 for (var i = 0; i < AddonState.ChatLog->UldManager.NodeListCount; i++)
                 {
                     var node = AddonState.ChatLog->UldManager.NodeList[i];
-                    if (node->NodeID == 10001)
+                    if (node->NodeId == 10001)
                     {
                         iconNode = node;
                         break;
@@ -756,7 +753,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
                     iconNode->SetPositionFloat(ButtonPos.X, ButtonPos.Y);
                     iconNode->SetHeight(ModuleConfig.ButtonSize);
                     iconNode->SetWidth(ModuleConfig.ButtonSize);
-                    ((AtkImageNode*)iconNode)->LoadIconTexture(ModuleConfig.ButtonIcon, 0);
+                    ((AtkImageNode*)iconNode)->LoadIconTexture((uint)ModuleConfig.ButtonIcon, 0);
                 }
 
                 break;
@@ -775,7 +772,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
         imageNode->WrapMode = 1;
         imageNode->Flags = (byte)ImageNodeFlags.AutoFit;
 
-        imageNode->LoadIconTexture(icon, 0);
+        imageNode->LoadIconTexture((uint)icon, 0);
         imageNode->AtkResNode.ToggleVisibility(true);
 
         imageNode->AtkResNode.SetWidth(ModuleConfig.ButtonSize);
@@ -803,7 +800,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
         for (var i = 0; i < AddonState.ChatLog->UldManager.NodeListCount; i++)
         {
             var node = AddonState.ChatLog->UldManager.NodeList[i];
-            if (node->NodeID == 10001)
+            if (node->NodeId == 10001)
             {
                 UnlinkAndFreeImageNode((AtkImageNode*)node, AddonState.ChatLog);
                 Service.AddonEvent.RemoveEvent(MouseClickHandle);

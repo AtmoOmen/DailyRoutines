@@ -1,3 +1,5 @@
+// 待更新
+/*
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +9,7 @@ using DailyRoutines.Helpers;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Hooking;
-using Dalamud.Interface.Internal;
+using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -157,11 +159,11 @@ public unsafe class MarkerInPartyList : DailyModuleBase
             if (member is null || member->GetComponent() is null)
                 continue;
 
-            if (!member->IsVisible)
+            if (!member->IsVisible())
                 break;
 
             var textNode = member->GetComponent()->UldManager.SearchNodeById(15);
-            if (textNode != null && textNode->IsVisible != visible)
+            if (textNode != null && textNode->IsVisible() != visible)
                 textNode->ToggleVisibility(visible);
         }
     }
@@ -189,9 +191,8 @@ public unsafe class MarkerInPartyList : DailyModuleBase
             for (var i = 0; i < 8; ++i)
             {
                 var offset = i * Marshal.SizeOf<PartyListCharInfo>();
-                var pCharData = pAgentHUD->PartyMemberList + offset;
-                var charData = *(PartyListCharInfo*)pCharData;
-                if (objectId == charData.ObjectID)
+                var pCharData = pAgentHUD->PartyMembers[i];
+                if (objectId == pCharData.Object->GetGameObjectId())
                 {
                     if (_markedObject.ContainsValue(i))
                         _markedObject.Remove(_markedObject.First(x => x.Value == i).Key);
@@ -317,3 +318,4 @@ public unsafe class MarkerInPartyList : DailyModuleBase
         Triangle,
     }
 }
+*/

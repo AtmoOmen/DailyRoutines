@@ -35,10 +35,11 @@ public static unsafe class AgentHelper
         AgentInterface* agentInterface, EventObject* eventObject, ulong eventKind, params object[] eventParams)
     {
         var atkValues = CreateAtkValueArray(eventParams);
+        var returnValues = new AtkValue(atkValues);
         if (atkValues == null) return eventObject;
         try
         {
-            agentInterface->ReceiveEvent(eventObject, atkValues, (uint)eventParams.Length, eventKind);
+            agentInterface->ReceiveEvent(&returnValues, atkValues, (uint)eventParams.Length, eventKind);
             return eventObject;
         }
         finally

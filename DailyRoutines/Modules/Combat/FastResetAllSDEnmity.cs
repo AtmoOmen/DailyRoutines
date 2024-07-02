@@ -66,8 +66,8 @@ public class FastResetAllSDEnmity : DailyModuleBase
 
             var targets = Service.ObjectTable.Where(x => x.ObjectKind == ObjectKind.BattleNpc &&
                                                          x.TargetObject != null &&
-                                                         x is BattleChara { NameId: 541 })
-                                 .Select(x => x.ObjectId)
+                                                         x is IBattleChara { NameId: 541 })
+                                 .Select(x => x.EntityId)
                                  .ToList();
 
             for (var i = 0; i < iterations; i++)

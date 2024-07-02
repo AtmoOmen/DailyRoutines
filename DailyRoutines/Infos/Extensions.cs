@@ -32,7 +32,7 @@ public static class Extensions
         return savedMacro;
     }
 
-    public static unsafe ExpandPlayerMenuSearch.CharacterSearchInfo ToCharacterSearchInfo(this Character chara)
+    public static unsafe ExpandPlayerMenuSearch.CharacterSearchInfo ToCharacterSearchInfo(this ICharacter chara)
     {
         var info = new ExpandPlayerMenuSearch.CharacterSearchInfo()
         {
@@ -42,7 +42,7 @@ public static class Extensions
         return info;
     }
 
-    public static unsafe FFXIVClientStructs.FFXIV.Client.Game.Character.Character* ToCharacterStruct(this Character chara)
+    public static unsafe FFXIVClientStructs.FFXIV.Client.Game.Character.Character* ToCharacterStruct(this ICharacter chara)
         => (FFXIVClientStructs.FFXIV.Client.Game.Character.Character*)chara.Address;
 
     public static ExpandPlayerMenuSearch.CharacterSearchInfo ToCharacterSearchInfo(this CharacterData chara)

@@ -4,7 +4,6 @@ using DailyRoutines.Managers;
 using DailyRoutines.Notifications;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Interface.Utility;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using ImGuiNET;
 
@@ -113,8 +112,7 @@ public class AutoNotifyMessages : DailyModuleBase
         }
     }
 
-    private static unsafe void OnChatMessage(
-        XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
+    private static unsafe void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool ishandled)
     {
         if (!ConfigValidChatTypes.Contains(type)) return;
 

@@ -67,9 +67,9 @@ public unsafe class AutoRefreshMarketSearchResult : DailyModuleBase
     {
         return addon != null
                && addon->ErrorMessage != null
-               && addon->ErrorMessage->AtkResNode.IsVisible
+               && addon->ErrorMessage->AtkResNode.IsVisible()
                && addon->HitsMessage != null
-               && !addon->HitsMessage->AtkResNode.IsVisible;
+               && !addon->HitsMessage->AtkResNode.IsVisible();
     }
 
     public override void Uninit()

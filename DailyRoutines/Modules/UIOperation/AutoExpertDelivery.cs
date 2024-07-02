@@ -107,7 +107,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
             return;
         }
 
-        var parts = Marshal.PtrToStringUTF8((nint)AtkStage.GetSingleton()->GetStringArrayData()[32]->StringArray[2])
+        var parts = Marshal.PtrToStringUTF8((nint)AtkStage.Instance()->GetStringArrayData()[32]->StringArray[2])
                            .Split('/');
 
         var capAmount = int.Parse(parts[1].Replace(",", ""));
@@ -193,10 +193,10 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
                 var slot = container->GetInventorySlot(i);
                 if (slot == null) continue;
 
-                var item = slot->ItemID;
+                var item = slot->ItemId;
                 if (item == 0) continue;
 
-                if (!slot->Flags.HasFlag(InventoryItem.ItemFlags.HQ)) continue;
+                if (!slot->Flags.HasFlag(InventoryItem.ItemFlags.HighQuality)) continue;
 
                 list.Add(item);
             }

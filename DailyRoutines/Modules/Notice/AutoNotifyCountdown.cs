@@ -41,8 +41,7 @@ public class AutoNotifyCountdown : DailyModuleBase
             UpdateConfig("OnlyNotifyWhenBackground", ConfigOnlyNotifyWhenBackground);
     }
 
-    private static unsafe void OnChatMessage(
-        XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
+    private static unsafe void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool ishandled)
     {
         if (ConfigOnlyNotifyWhenBackground && !Framework.Instance()->WindowInactive) return;
 

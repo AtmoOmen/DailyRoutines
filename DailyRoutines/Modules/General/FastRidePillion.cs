@@ -44,14 +44,14 @@ public unsafe class FastRidePillion : DailyModuleBase
             return AgentContextReceiveEventHook.Original(agent, a2, a3, a4, a5);
 
         var targetObjectIDGame = agent->TargetObjectId;
-        if (targetObjectIDGame.ObjectID == 0 || targetObjectIDGame.Type != 0)
+        if (targetObjectIDGame.ObjectId == 0 || targetObjectIDGame.Type != 0)
             return AgentContextReceiveEventHook.Original(agent, a2, a3, a4, a5);
 
-        var isInParty = GroupManager.Instance()->IsObjectIDInParty(targetObjectIDGame.ObjectID);
+        var isInParty = GroupManager.Instance()->GetGroup()->IsEntityIdInParty(targetObjectIDGame.ObjectId);
         if (!isInParty) 
             return AgentContextReceiveEventHook.Original(agent, a2, a3, a4, a5);
 
-        var chara = CharacterManager.Instance()->LookupBattleCharaByObjectId(targetObjectIDGame.ObjectID);
+        var chara = CharacterManager.Instance()->LookupBattleCharaByEntityId(targetObjectIDGame.ObjectId);
         if (chara == null)
             return AgentContextReceiveEventHook.Original(agent, a2, a3, a4, a5);
 

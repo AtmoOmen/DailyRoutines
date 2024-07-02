@@ -100,10 +100,10 @@ public unsafe class AutoJoinExitDuty : DailyModuleBase
                 if (gearset == null) continue;
                 if (!gearset->Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists)) continue;
                 if (gearset->Flags.HasFlag(RaptureGearsetModule.GearsetFlag.MainHandMissing)) continue;
-                if (gearset->ID != i) continue;
+                if (gearset->Id != i) continue;
                 if (gearset->ClassJob > 18)
                 {
-                    ChatHelper.Instance.SendMessage($"/gearset change {gearset->ID + 1}");
+                    ChatHelper.Instance.SendMessage($"/gearset change {gearset->Id + 1}");
                     return true;
                 }
             }
